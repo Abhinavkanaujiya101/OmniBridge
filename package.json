@@ -1,0 +1,29 @@
+{
+  "name": "omnibridge-root",
+  "version": "1.0.0",
+  "description": "OmniBridge - Intelligent AI Orchestration and API Gateway Platform",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev --prefix backend\" \"npm run dev --prefix frontend\"",
+    "dev:backend": "npm run dev --prefix backend",
+    "dev:frontend": "npm run dev --prefix frontend",
+    "install:all": "npm install --prefix backend && npm install --prefix frontend",
+    "start:backend": "npm start --prefix backend",
+    "build:frontend": "npm run build --prefix frontend"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  },
+  "keywords": [
+    "ai-orchestration",
+    "api-gateway",
+    "websocket-streaming",
+    "llm-router",
+    "gemini",
+    "openai",
+    "together-ai",
+    "runway"
+  ],
+  "author": "OmniBridge Engineering Team",
+  "license": "MIT"
+}
