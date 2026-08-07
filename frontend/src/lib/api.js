@@ -133,3 +133,14 @@ export function createWebSocketStream({ onMessage, onError, onOpen, onClose }) {
     }
   };
 }
+
+/**
+ * Utility function to extract an HTTP/HTTPS URL string from a text block using regular expression.
+ * @param {string} text
+ * @returns {string|null}
+ */
+export function extractUrlFromText(text) {
+  if (!text || typeof text !== 'string') return null;
+  const match = text.match(/https?:\/\/[^\s"'<>)]+/i);
+  return match ? match[0] : null;
+}

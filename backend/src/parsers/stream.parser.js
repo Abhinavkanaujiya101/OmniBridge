@@ -6,7 +6,7 @@
 /**
  * Parse an incoming SSE (Server-Sent Events) chunk line or raw buffer.
  * @param {string} rawChunk - Raw string chunk from HTTP/SSE stream
- * @param {string} provider - Vendor identifier: 'gemini' | 'openai' | 'together' | 'runway'
+ * @param {string} provider - Vendor identifier: 'gemini' | 'openai' | 'together' | 'luma'
  * @returns {Array<Object>} List of normalized token payloads
  */
 function parseStreamChunk(rawChunk, provider = 'openai') {
@@ -100,14 +100,14 @@ function extractTokenByProvider(json, provider) {
       };
     }
 
-    case 'runway': {
-      // Runway ML job status update packet
+    case 'luma': {
+      // Luma AI job status update packet
       return {
         type: 'STATUS_UPDATE',
-        provider: 'runway',
-        status: json?.status || 'PROCESSING',
-        progress: json?.progress || 0,
-        outputUrl: json?.output?.[0] || null,
+        provider: 'luma',
+        status: json?.state || json?.status || 'PROCESSING',
+        progress: json?.progress || (json?.state === 'completed' ? 100 : 50),
+        outputUrl: json?.assets?.video || json?.output?.[0] || null,
         timestamp
       };
     }

@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Film, Image as ImageIcon, Download, ExternalLink, RefreshCw, CheckCircle, Sparkles } from 'lucide-react';
-import { getExportUrl } from '../lib/api';
+import { getExportUrl, extractUrlFromText } from '../lib/api';
 
 export default function MediaPreviewCard({
   taskType = 'IMAGE_GENERATION',
@@ -17,8 +17,9 @@ export default function MediaPreviewCard({
   const isVideo = taskType === 'VIDEO_GENERATION';
   const isPending = status === 'QUEUED' || status === 'PROCESSING' || status === 'PARSING';
 
-  // Extract URL from output text if passed as text
-  const extractedUrl = imageUrl || extractUrlFromText(output);
+  const safeOutput = typeof output === 'string' ? output : (output?.videoUrl || output?.imageUrl || output?.assets?.video || output?.url || '');
+  const videoUrlProp = typeof imageUrl === 'string' ? imageUrl : (output?.videoUrl || output?.assets?.video || output?.imageUrl || null);
+  const extractedUrl = videoUrlProp || (typeof output === 'string' ? extractUrlFromText(output) : null);
 
   return (
     <div className="glass-panel rounded-xl p-4 my-3 border border-gray-800 space-y-3">
@@ -56,7 +57,7 @@ export default function MediaPreviewCard({
               </p>
               <p className="text-[11px] text-gray-400 mt-1">
                 {isVideo
-                  ? 'Rendering video keyframes on Runway GPU cluster...'
+                  ? 'Rendering video keyframes on Luma AI GPU cluster...'
                   : 'Synthesizing high-res image via FLUX model...'}
               </p>
             </div>
@@ -133,10 +134,4 @@ export default function MediaPreviewCard({
       </div>
     </div>
   );
-}
-
-function extractUrlFromText(text) {
-  if (!text) return null;
-  const match = text.match(/https?:\/\/[^\s"']+\.(?:png|jpg|jpeg|gif|mp4|webm)/i);
-  return match ? match[0] : null;
 }

@@ -2,8 +2,8 @@ import './globals.css';
 
 export const metadata = {
   title: 'OmniBridge — Intelligent AI Orchestration & API Gateway',
-  description: 'Multi-provider AI API Gateway and real-time streaming platform for Google Gemini, OpenAI, Together AI, and Runway ML.',
-  keywords: ['AI Gateway', 'LLM Orchestration', 'Gemini', 'OpenAI', 'Together AI', 'Runway', 'WebSockets'],
+  description: 'Multi-provider AI API Gateway and real-time streaming platform for Google Gemini, OpenAI, Together AI, and Luma Dream Machine.',
+  keywords: ['AI Gateway', 'LLM Orchestration', 'Gemini', 'OpenAI', 'Together AI', 'Luma AI', 'Dream Machine', 'WebSockets'],
 };
 
 export default function RootLayout({ children }) {

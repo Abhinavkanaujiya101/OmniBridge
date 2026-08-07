@@ -21,16 +21,19 @@ const HARD_KEYWORDS = {
   VIDEO_GENERATION: [
     'generate a video', 'create a video', 'make a video', 'produce a video',
     'render a video', 'animate a scene', 'generate animation', 'make an animation',
-    'video of', 'short film', 'cinematic clip', 'runway', 'gen-2', 'gen-3',
-    'text to video', 'txt2video', 'video generation'
+    'video of', 'short film', 'cinematic clip', 'luma', 'luma ai', 'dream machine',
+    'dream-machine', 'text to video', 'txt2video', 'video generation'
   ],
   IMAGE_GENERATION: [
     'generate an image', 'create an image', 'make an image', 'draw an image',
-    'generate a picture', 'create a picture', 'make a picture',
-    'paint a', 'render an image', 'illustrate', 'visualize',
-    'generate art', 'create art', 'digital art of', 'photo of',
-    'realistic image', 'flux image', 'stable diffusion', 'text to image',
-    'txt2img', 'image of', 'dalle', 'midjourney style', 'image generation'
+    'generate a picture', 'create a picture', 'make a picture', 'picture of',
+    'photo of', 'image of', 'draw a', 'draw an', 'paint a', 'paint an',
+    'render an image', 'render a', 'illustrate', 'visualize',
+    'generate art', 'create art', 'digital art of', 'realistic image',
+    'flux image', 'stable diffusion', 'text to image', 'txt2img', 'dalle',
+    'midjourney style', 'image generation', 'make a car', 'make bmw',
+    'make a logo', 'make a portrait', 'make a photo', 'make a wallpaper',
+    'make a banner', 'make a 3d', 'make an art', 'make art', 'make car'
   ],
   CODE: [
     'write a function', 'write a program', 'write code', 'write a script',
@@ -39,7 +42,8 @@ const HARD_KEYWORDS = {
     'algorithm for', 'write unit tests', 'write tests for',
     'javascript', 'python', 'typescript', 'golang', 'rust', 'java code',
     'sql query', 'bash script', 'shell script', 'dockerfile', 'regex for',
-    'how do i code', 'how do i implement'
+    'how do i code', 'how do i implement', 'binary search tree', 'bst',
+    'linked list', 'stack and queue', 'sorting algorithm'
   ],
   MATH: [
     'calculate', 'compute', 'solve', 'what is the integral', 'what is the derivative',
@@ -60,21 +64,26 @@ const REGEX_PATTERNS = {
     /\btext.?to.?video\b/i
   ],
   IMAGE_GENERATION: [
+    /\b(make|draw|paint|create|generate|render|sketch|illustrate)\s+(a|an|the)?\s*(bmw|car|ferrari|lamborghini|vehicle|house|cat|dog|dragon|robot|portrait|landscape|wallpaper|logo|poster|banner|picture|image|photo|drawing|painting|3d|character|avatar|sketch)\b/i,
+    /\bmake\s+[\w\s]{1,25}\s+(car|vehicle|bmw|logo|picture|photo|image|art|wallpaper|portrait|drawing|painting|3d)\b/i,
+    /\b(picture|photo|image|drawing|painting|illustration|artwork)\s+of\b/i,
     /\b(image|picture|photo|illustration|artwork|drawing|painting|poster|banner|thumbnail)\b.*\b(of|showing|depicting|with|in|on)\b/i,
-    /\bgenerate\b.*\b(image|picture|photo|art)\b/i,
+    /\bgenerate\b.*\b(image|picture|photo|art|graphic)\b/i,
     /\btext.?to.?image\b/i,
     /\b(realistic|photorealistic|hyper.?realistic|8k|4k|hdr)\b/i,
     /\bin the style of\b/i
   ],
   CODE: [
     /```[\w\s]*\n?[\s\S]*```/,                          // fenced code block in prompt
-    /\bdef\s+\w+\s*\(/,                                  // Python function
-    /\bfunction\s+\w+\s*\(/,                             // JS function
+    /\b(write|create|implement|build|code|debug|refactor)\b.*\b(function|script|program|class|algorithm|code|api|backend|frontend|test|unit test|bst|binary search tree)\b/i,
+    /\bdef\s+\w+\s*\(/,                                  // Python function definition
+    /\bfunction\s+\w+\s*\(/,                             // JS function definition
     /\bclass\s+\w+\s*[{:]/,                              // class definition
     /\bconst\b|\blet\b|\bvar\b/,                         // JS keywords
     /\b(if|else|for|while|return|import|export)\b\s*[\w({]/,
     /^\s*(\/\/|#|--|\*)\s/m,                             // comment lines
-    /\b(npm|pip|cargo|go|make)\s+\w+/i
+    /\b(npm|pip|cargo|go)\s+(install|run|build|test|start)\b/i,
+    /\bmake\s+(clean|all|install|build|test)\b/i        // GNU make build target only
   ],
   MATH: [
     /\b\d+[\+\-\*\/\^]\d+\b/,                           // arithmetic expressions
@@ -109,63 +118,115 @@ const TASK_TYPES = ['TEXT', 'MATH', 'IMAGE_GENERATION', 'VIDEO_GENERATION', 'COD
  * @param {string} prompt - The incoming raw prompt text
  * @returns {{ taskType: TaskType, confidence: number, method: string }}
  */
+/**
+ * Assess complexity to differentiate casual chat/basic utilities from complex multi-step reasoning.
+ *
+ * @param {string} prompt
+ * @param {TaskType} taskType
+ * @returns {{ complexity: 'casual'|'basic'|'complex', temperature: number, preferHeavyModel: boolean }}
+ */
+function evaluateComplexity(prompt, taskType) {
+  const norm = (prompt || '').toLowerCase();
+  const isComplexSignal =
+    /\b(system architecture|distributed system|microservices|design pattern|deep analytical|security audit|performance benchmark|multi-step reasoning|formal proof|complex refactor)\b/i.test(norm) ||
+    (prompt.length > 600 && (taskType === 'CODE' || taskType === 'MATH'));
+
+  if (isComplexSignal) {
+    return { complexity: 'complex', temperature: 0.2, preferHeavyModel: true };
+  }
+  if (taskType === 'CODE' || taskType === 'MATH') {
+    return { complexity: 'basic', temperature: 0.2, preferHeavyModel: false };
+  }
+  return { complexity: 'casual', temperature: 0.7, preferHeavyModel: false };
+}
+
+/**
+ * Classify a raw prompt into a canonical task type and complexity profile.
+ *
+ * @param {string} prompt - The incoming raw prompt text
+ * @returns {{ taskType: TaskType, confidence: number, method: string, complexity: 'casual'|'basic'|'complex', temperature: number, preferHeavyModel: boolean }}
+ */
 function classifyIntent(prompt) {
   if (!prompt || typeof prompt !== 'string' || !prompt.trim()) {
-    return { taskType: 'TEXT', confidence: 0.5, method: 'default' };
+    const meta = evaluateComplexity(prompt, 'TEXT');
+    return { taskType: 'TEXT', confidence: 0.5, method: 'default', ...meta };
   }
 
   const normalized = prompt.trim().toLowerCase();
 
-  // ── Tier 1: Hard keyword match (highest priority) ──────────────────────────
-  const tier1Order = ['VIDEO_GENERATION', 'IMAGE_GENERATION', 'CODE', 'MATH'];
-  for (const taskType of tier1Order) {
-    const keywords = HARD_KEYWORDS[taskType];
-    for (const kw of keywords) {
-      if (normalized.includes(kw)) {
-        return { taskType, confidence: 0.97, method: 'keyword' };
+  // ── Pre-check: Explicit Coding Signals ──────────────────────────────────
+  const hasExplicitCode =
+    /\b(write|create|generate|implement|debug|build|code)\b.*\b(code|function|program|script|class|method|algorithm|bst|tree)\b/i.test(normalized) ||
+    /\b(in\s+)?(c\+\+|cpp|python|java|javascript|js|c#|golang|rust|typescript|html|css|sql)\b/i.test(normalized) ||
+    /\b(function|class|method)\s+(in|to|for|with)\b/i.test(normalized) ||
+    /\b(implement|implementation|implementing|recursively|recursion|binary search|linked list|stack|queue|sorting)\b/i.test(normalized) ||
+    /\b(write\s+a\s+code|write\s+code|code\s+for)\b/i.test(normalized);
+
+  let rawResult = null;
+
+  if (hasExplicitCode) {
+    rawResult = { taskType: 'CODE', confidence: 0.98, method: 'code-priority' };
+  } else {
+    // ── Tier 1: Hard keyword match ─────────────────────────────────────────
+    const tier1Order = ['VIDEO_GENERATION', 'IMAGE_GENERATION', 'CODE', 'MATH'];
+    for (const taskType of tier1Order) {
+      const keywords = HARD_KEYWORDS[taskType];
+      for (const kw of keywords) {
+        if (normalized.includes(kw)) {
+          rawResult = { taskType, confidence: 0.97, method: 'keyword' };
+          break;
+        }
       }
+      if (rawResult) break;
     }
   }
 
-  // ── Tier 2: Regex heuristic match ─────────────────────────────────────────
-  const tier2Order = ['VIDEO_GENERATION', 'IMAGE_GENERATION', 'CODE', 'MATH'];
-  for (const taskType of tier2Order) {
-    const patterns = REGEX_PATTERNS[taskType];
-    for (const pattern of patterns) {
-      if (pattern.test(prompt)) {
-        return { taskType, confidence: 0.85, method: 'regex' };
+  if (!rawResult) {
+    // ── Tier 2: Regex heuristic match ─────────────────────────────────────────
+    const tier2Order = ['VIDEO_GENERATION', 'IMAGE_GENERATION', 'CODE', 'MATH'];
+    for (const taskType of tier2Order) {
+      const patterns = REGEX_PATTERNS[taskType];
+      for (const pattern of patterns) {
+        if (pattern.test(prompt)) {
+          rawResult = { taskType, confidence: 0.85, method: 'regex' };
+          break;
+        }
       }
+      if (rawResult) break;
     }
   }
 
-  // ── Tier 3: Weighted vocabulary scoring ───────────────────────────────────
-  const words = normalized.split(/\W+/).filter(Boolean);
-  const scores = {};
+  if (!rawResult) {
+    // ── Tier 3: Weighted vocabulary scoring ───────────────────────────────────
+    const words = normalized.split(/\W+/).filter(Boolean);
+    const scores = {};
 
-  for (const taskType of TASK_TYPES) {
-    const vocab = SCORE_VOCAB[taskType] || [];
-    scores[taskType] = words.reduce((acc, word) => {
-      return acc + (vocab.includes(word) ? 1 : 0);
-    }, 0);
+    for (const taskType of TASK_TYPES) {
+      const vocab = SCORE_VOCAB[taskType] || [];
+      scores[taskType] = words.reduce((acc, word) => {
+        return acc + (vocab.includes(word) ? 1 : 0);
+      }, 0);
+    }
+
+    const normalized_scores = {};
+    for (const taskType of TASK_TYPES) {
+      const vocab = SCORE_VOCAB[taskType] || [];
+      normalized_scores[taskType] = scores[taskType] / Math.max(vocab.length, 1);
+    }
+
+    const topType = Object.entries(normalized_scores).sort(([, a], [, b]) => b - a)[0];
+    const topScore = topType[1];
+
+    if (topScore > 0) {
+      const confidence = Math.min(0.5 + topScore * 5, 0.82);
+      rawResult = { taskType: topType[0], confidence, method: 'scoring' };
+    } else {
+      rawResult = { taskType: 'TEXT', confidence: 0.6, method: 'default' };
+    }
   }
 
-  // Normalize by vocab size to avoid bias
-  const normalized_scores = {};
-  for (const taskType of TASK_TYPES) {
-    const vocab = SCORE_VOCAB[taskType] || [];
-    normalized_scores[taskType] = scores[taskType] / Math.max(vocab.length, 1);
-  }
-
-  const topType = Object.entries(normalized_scores).sort(([, a], [, b]) => b - a)[0];
-  const topScore = topType[1];
-
-  if (topScore > 0) {
-    const confidence = Math.min(0.5 + topScore * 5, 0.82);
-    return { taskType: topType[0], confidence, method: 'scoring' };
-  }
-
-  // ── Default: TEXT for general language tasks ───────────────────────────────
-  return { taskType: 'TEXT', confidence: 0.6, method: 'default' };
+  const meta = evaluateComplexity(prompt, rawResult.taskType);
+  return { ...rawResult, ...meta };
 }
 
 /**
@@ -176,19 +237,21 @@ function classifyIntent(prompt) {
  * @returns {string} - The optimized/augmented prompt
  */
 function optimizePrompt(prompt, taskType) {
+  const trimmed = (prompt || '').trim();
+
+  const formattingInstruction = `Respond using clean markdown with clear headings (#, ##, ###), bold key terms, structured bullet/numbered lists, and relevant emojis for key section titles and takeaways. Make the response highly visual, readable, and structured.`;
+
   const templates = {
-    TEXT: (p) => p.trim(),
-    MATH: (p) =>
-      `Solve the following step-by-step, showing all intermediate workings and final answer:\n\n${p.trim()}`,
-    CODE: (p) =>
-      `Write clean, well-commented, production-ready code for the following requirement. Include edge case handling and example usage:\n\n${p.trim()}`,
+    TEXT: (p) => `${p}\n\n[Instruction: ${formattingInstruction}]`,
+    MATH: (p) => `${p}\n\n[Instruction: Provide step-by-step mathematical reasoning using clear markdown headings with emojis, bold equations, and structured numbered/bullet lists.]`,
+    CODE: (p) => `${p}\n\n[Instruction: Provide clean, production-ready code blocks along with concise markdown explanations, section headings with emojis, and bullet points.]`,
     IMAGE_GENERATION: (p) =>
-      `${p.trim()}, highly detailed, professional quality, sharp focus, vibrant lighting`,
+      `${p}, highly detailed, professional quality, sharp focus, vibrant lighting`,
     VIDEO_GENERATION: (p) =>
-      `${p.trim()}, cinematic quality, smooth motion, high framerate, professional color grading`
+      `${p}, cinematic quality, smooth motion, high framerate, professional color grading`
   };
 
-  return (templates[taskType] || templates['TEXT'])(prompt);
+  return (templates[taskType] || templates['TEXT'])(trimmed);
 }
 
 module.exports = { classifyIntent, optimizePrompt, TASK_TYPES };

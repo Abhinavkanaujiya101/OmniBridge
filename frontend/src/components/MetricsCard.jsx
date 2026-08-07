@@ -1,18 +1,10 @@
 'use client';
 
 import React from 'react';
-import { Activity, Zap, Cpu, Server } from 'lucide-react';
+import { Cpu } from 'lucide-react';
 
 export default function MetricsCard({ metrics = {}, className = '' }) {
   const items = [
-    {
-      title: 'Gateway Status',
-      value: metrics.status || 'OPERATIONAL',
-      subtext: 'WebSocket & REST active',
-      icon: Server,
-      color: 'text-emerald-400',
-      bg: 'bg-emerald-500/10'
-    },
     {
       title: 'Active Provider',
       value: metrics.provider || 'Gemini 1.5',
@@ -20,26 +12,10 @@ export default function MetricsCard({ metrics = {}, className = '' }) {
       icon: Cpu,
       color: 'text-sky-400',
       bg: 'bg-sky-500/10'
-    },
-    {
-      title: 'Stream Latency',
-      value: metrics.latency ? `${metrics.latency} ms` : '24 ms',
-      subtext: 'Real-time TTFT',
-      icon: Zap,
-      color: 'text-amber-400',
-      bg: 'bg-amber-500/10'
-    },
-    {
-      title: 'Token Throughput',
-      value: metrics.tokens ? `${metrics.tokens} tokens` : '142 t/s',
-      subtext: 'Stream parsed chunks',
-      icon: Activity,
-      color: 'text-purple-400',
-      bg: 'bg-purple-500/10'
     }
   ];
 
-  const defaultGridClass = 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 my-6';
+  const defaultGridClass = 'grid grid-cols-1 gap-4 my-6';
 
   return (
     <div className={className || defaultGridClass}>

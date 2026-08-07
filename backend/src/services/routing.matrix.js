@@ -35,8 +35,16 @@ const config = require('../config/env');
 /** @type {Record<TaskType, RouteRule[]>} */
 const ROUTING_MATRIX = {
 
-  // ── TEXT: Fast, cheap summarization, translation, Q&A ─────────────────────
+  // ── TEXT: Fast, cheap summarization, translation, Q&A, casual banter ────────
   TEXT: [
+    {
+      provider: 'groq',
+      model: 'llama-3.1-8b-instant',
+      estimatedLatencyMs: 300,
+      costTier: 'low',
+      capability: 'Ultra-fast response for casual conversation, greetings, banter, and text summarization',
+      supportsStream: true
+    },
     {
       provider: 'gemini',
       model: 'gemini-1.5-flash',
@@ -110,6 +118,14 @@ const ROUTING_MATRIX = {
   // ── CODE: Code generation, debugging, refactoring ─────────────────────────
   CODE: [
     {
+      provider: 'groq',
+      model: 'llama-3.1-8b-instant',
+      estimatedLatencyMs: 350,
+      costTier: 'low',
+      capability: 'Lightweight code generation and standard utility functions',
+      supportsStream: true
+    },
+    {
       provider: 'gemini',
       model: 'gemini-1.5-flash',
       estimatedLatencyMs: 900,
@@ -171,22 +187,22 @@ const ROUTING_MATRIX = {
     }
   ],
 
-  // ── VIDEO_GENERATION: Text-to-video via Runway ML ─────────────────────────
+  // ── VIDEO_GENERATION: Text-to-video via Luma Dream Machine ─────────────
   VIDEO_GENERATION: [
     {
-      provider: 'runway',
-      model: 'gen3a_turbo',
-      estimatedLatencyMs: 45000,
+      provider: 'luma',
+      model: 'dream-machine',
+      estimatedLatencyMs: 30000,
       costTier: 'medium',
-      capability: 'Runway Gen-3 Alpha Turbo: fast, high-quality video generation',
+      capability: 'Luma Dream Machine: realistic, high-framerate text-to-video synthesis',
       supportsStream: false
     },
     {
-      provider: 'runway',
-      model: 'gen-2',
-      estimatedLatencyMs: 90000,
+      provider: 'luma',
+      model: 'ray-1',
+      estimatedLatencyMs: 45000,
       costTier: 'medium',
-      capability: 'Runway Gen-2: stable fallback for text-to-video tasks',
+      capability: 'Luma Ray 1: high quality video generation model',
       supportsStream: false
     }
   ]

@@ -59,6 +59,15 @@ app.use((err, req, res, next) => {
 // Initialize WebSocket Server attached to HTTP Server
 initWebSocketServer(server);
 
+// Server error handling
+server.on('error', (err) => {
+  if (err.code === 'EADDRINUSE') {
+    console.error(`[ServerError] Port ${config.port} is already in use by another running process.`);
+  } else {
+    console.error('[ServerError] Server error:', err);
+  }
+});
+
 // Start HTTP & WS Server
 server.listen(config.port, () => {
   console.log(`

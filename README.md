@@ -1,13 +1,13 @@
 # OmniBridge 🌉
 > Intelligent AI Orchestration and API Gateway Platform
 
-OmniBridge is a high-performance, real-time AI orchestration gateway designed to bridge multi-provider LLM and generative model APIs (Google Gemini, OpenAI, Together AI, Runway ML) into a unified, low-latency streaming pipeline with PostgreSQL/Supabase persistence and dynamic telemetry dashboarding.
+OmniBridge is a high-performance, real-time AI orchestration gateway designed to bridge multi-provider LLM and generative model APIs (Google Gemini, OpenAI, Together AI, Luma Dream Machine) into a unified, low-latency streaming pipeline with PostgreSQL/Supabase persistence and dynamic telemetry dashboarding.
 
 ---
 
 ## 🌟 Key Features
 
-- **Unified Gateway Routing**: Single API interface to route requests dynamically across Gemini, OpenAI, Together AI, and Runway.
+- **Unified Gateway Routing**: Single API interface to route requests dynamically across Gemini, OpenAI, Together AI, and Luma AI.
 - **Real-Time Streaming**: High-throughput WebSocket server (`ws`/`socket.io`) for real-time model response token streaming.
 - **Server Stream Parsing**: Native parsing scripts that format multi-vendor SSE/chunked streams into a standardized JSON packet layout.
 - **Telemetry & Metrics**: Interactive Next.js console tracking token count, model latency, and active connection status.
@@ -24,7 +24,7 @@ OmniBridge/
 │   │   ├── config/           # Environment loader & DB client setup
 │   │   ├── controllers/      # API Controllers
 │   │   ├── routes/           # REST endpoints (/api/v1/gateway, /api/v1/providers)
-│   │   ├── services/         # AI Provider wrappers (Gemini, OpenAI, Together, Runway)
+│   │   ├── services/         # AI Provider wrappers (Gemini, OpenAI, Together, Luma)
 │   │   ├── parsers/          # Server parsing scripts for multi-provider stream data
 │   │   └── websocket/        # Real-time WebSocket connection manager
 │   ├── .env.example
@@ -76,7 +76,7 @@ npm run dev
 | **Google Gemini** | Gemini 1.5 Pro, Flash | SSE / WebSockets |
 | **OpenAI** | GPT-4o, GPT-4o-mini | Chunked Stream |
 | **Together AI** | Llama-3-70B, Mixtral | Token Streaming |
-| **Runway ML** | Gen-2, Gen-3 Video Tasks | Job Webhook / Socket |
+| **Luma Dream Machine** | dream-machine, ray-1, ray-2 | Job Webhook / Socket |
 
 ---
 

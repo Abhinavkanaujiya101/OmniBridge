@@ -12,6 +12,10 @@ const config = {
   corsOrigin: process.env.CORS_ORIGIN || 'http://localhost:3000',
   gatewaySecret: process.env.GATEWAY_SECRET || 'default_secret',
   providers: {
+    groq: {
+      apiKey: process.env.GROQ_API_KEY || '',
+      baseUrl: process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1'
+    },
     gemini: {
       apiKey: process.env.GEMINI_API_KEY || '',
       baseUrl: 'https://generativelanguage.googleapis.com/v1beta'
@@ -24,15 +28,19 @@ const config = {
       apiKey: process.env.TOGETHER_API_KEY || '',
       baseUrl: 'https://api.together.xyz/v1'
     },
-    runway: {
-      apiKey: process.env.RUNWAY_API_KEY || '',
-      baseUrl: 'https://api.runwayml.com/v1'
+    luma: {
+      apiKey: process.env.LUMAAI_API_KEY || '',
+      baseUrl: process.env.LUMA_BASE_URL || 'https://api.lumalabs.ai/dream-machine/v1'
     }
   },
   db: {
     connectionString: process.env.DATABASE_URL || '',
     supabaseUrl: process.env.SUPABASE_URL || '',
-    supabaseAnonKey: process.env.SUPABASE_ANON_KEY || ''
+    supabaseAnonKey: process.env.SUPABASE_ANON_KEY || process.env.SUPABASE_PUBLISHABLE_KEY || '',
+    supabasePublishableKey: process.env.SUPABASE_PUBLISHABLE_KEY || process.env.SUPABASE_ANON_KEY || '',
+    supabaseServiceRoleKey: process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY || '',
+    supabaseSecretKey: process.env.SUPABASE_SECRET_KEY || '',
+    supabaseJwksUrl: process.env.SUPABASE_JWKS_URL || ''
   }
 };
 
