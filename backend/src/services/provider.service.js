@@ -166,9 +166,16 @@ class ProviderService {
       };
     }
 
-    // 2. Primary Provider Call with Exponential Backoff Retry
+    // 2. Optimize prompt for text, code, and document generation queries
+    const { optimizePrompt } = require('./intent.classifier');
+    const taskType = capabilityCheck.detectedTaskType || 'TEXT';
+    const effectivePrompt = ['TEXT', 'DOCUMENT_GENERATION', 'CODE'].includes(taskType)
+      ? optimizePrompt(prompt, taskType)
+      : prompt;
+
+    // 3. Primary Provider Call with Exponential Backoff Retry
     try {
-      return await this._dispatchDirectCall(provider, model, prompt, temperature);
+      return await this._dispatchDirectCall(provider, model, effectivePrompt, temperature);
     } catch (primaryErr) {
       console.warn(`[ProviderService] Primary provider ${provider}/${model} failed: ${primaryErr.message}. Attempting Dynamic Provider Fallback...`);
 
@@ -244,7 +251,13 @@ class ProviderService {
           url,
           {
             model: model || 'llama-3.1-8b-instant',
-            messages: [{ role: 'user', content: prompt }],
+            messages: [
+              {
+                role: 'system',
+                content: "Match response length directly to user prompt scope. For brief greetings (e.g., 'hey', 'hello', 'hi'), respond with a simple, concise 1-sentence greeting. Do NOT list conversation categories, menus, or bullet points unless explicitly asked."
+              },
+              { role: 'user', content: prompt }
+            ],
             temperature
           },
           {

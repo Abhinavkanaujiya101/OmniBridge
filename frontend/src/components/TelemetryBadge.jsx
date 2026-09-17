@@ -4,11 +4,11 @@ import React from 'react';
 import { Cpu } from 'lucide-react';
 
 const TASK_TYPE_STYLES = {
-  TEXT: { bg: 'bg-sky-500/10 text-sky-400 border-sky-500/20', label: '💬 Text Processing', emoji: '💬' },
-  MATH: { bg: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20', label: '📐 Mathematical Reasoning', emoji: '📐' },
-  CODE: { bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', label: '💻 Code Generation', emoji: '💻' },
-  IMAGE_GENERATION: { bg: 'bg-purple-500/10 text-purple-400 border-purple-500/20', label: '🎨 Image Synthesis', emoji: '🎨' },
-  VIDEO_GENERATION: { bg: 'bg-amber-500/10 text-amber-400 border-amber-500/20', label: '🎬 Generative Video', emoji: '🎬' }
+  TEXT: { bg: 'bg-sky-500/10 text-sky-400 border-sky-500/20', label: 'Text Processing' },
+  DOCUMENT_GENERATION: { bg: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20', label: 'Document Generation' },
+  CODE: { bg: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20', label: 'Code Generation' },
+  IMAGE_GENERATION: { bg: 'bg-purple-500/10 text-purple-400 border-purple-500/20', label: 'Image Synthesis' },
+  VIDEO_GENERATION: { bg: 'bg-amber-500/10 text-amber-400 border-amber-500/20', label: 'Generative Video' }
 };
 
 export default function TelemetryBadge({ telemetry = {} }) {
@@ -26,7 +26,7 @@ export default function TelemetryBadge({ telemetry = {} }) {
       <div className="flex items-center justify-between border-b border-gray-800/80 pb-2">
         <div className="flex items-center gap-2">
           <span className={`px-2.5 py-1 rounded-md text-xs font-semibold border ${style.bg}`}>
-            {style.emoji} {taskType}
+            {taskType}
           </span>
         </div>
       </div>

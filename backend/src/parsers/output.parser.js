@@ -178,27 +178,26 @@ function extractJSON(rawOutput) {
  */
 function generatePDFStream(rawOutput, meta = {}) {
   const {
-    title = 'OmniBridge Output',
-    author = 'OmniBridge AI Gateway',
-    taskType = 'TEXT',
+    title = 'Executive Report',
+    author = '',
+    taskType = 'DOCUMENT_GENERATION',
     provider = 'AI'
   } = meta;
 
   const parsed = parseRawOutput(rawOutput);
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const filename = `omnibridge_${taskType.toLowerCase()}_${timestamp}.pdf`;
+  const filename = `document_${taskType.toLowerCase()}_${timestamp}.pdf`;
 
   // Create an in-memory passthrough stream — PDFKit pipes into it
   const passthrough = new PassThrough();
 
   const doc = new PDFDocument({
     size: 'A4',
-    margins: { top: 56, bottom: 56, left: 64, right: 64 },
+    margins: { top: 54, bottom: 54, left: 54, right: 54 },
     info: {
       Title: title,
       Author: author,
-      Subject: `OmniBridge AI Output — ${taskType}`,
-      Keywords: `AI, ${taskType}, ${provider}`,
+      Subject: `Document Output — ${taskType}`,
       CreationDate: new Date()
     },
     bufferPages: false
@@ -206,42 +205,19 @@ function generatePDFStream(rawOutput, meta = {}) {
 
   doc.pipe(passthrough);
 
-  // ── Cover/header band ────────────────────────────────────────────────────
-  doc
-    .rect(0, 0, doc.page.width, 80)
-    .fill('#0f172a');
-
-  doc
-    .fillColor('#38bdf8')
-    .fontSize(22)
-    .font('Helvetica-Bold')
-    .text('OmniBridge', 64, 22);
-
-  doc
-    .fillColor('#94a3b8')
-    .fontSize(10)
-    .font('Helvetica')
-    .text(`AI Orchestration Gateway  •  ${provider.toUpperCase()}  •  ${taskType}`, 64, 50);
-
-  doc.moveDown(4);
-
-  // ── Document title ───────────────────────────────────────────────────────
+  // ── Document Title (Centered 24pt Bold) ──────────────────────────────────
   doc
     .fillColor('#0f172a')
-    .fontSize(18)
+    .fontSize(24)
     .font('Helvetica-Bold')
-    .text(title, { align: 'left' });
+    .text(title, { align: 'center' });
+
+  doc.moveDown(0.8);
 
   doc
-    .fillColor('#64748b')
-    .fontSize(9)
-    .font('Helvetica')
-    .text(`Generated: ${new Date().toUTCString()}`, { align: 'left' });
-
-  doc
-    .moveTo(64, doc.y + 6)
-    .lineTo(doc.page.width - 64, doc.y + 6)
-    .strokeColor('#e2e8f0')
+    .moveTo(54, doc.y)
+    .lineTo(doc.page.width - 54, doc.y)
+    .strokeColor('#cbd5e1')
     .lineWidth(1)
     .stroke();
 
@@ -280,18 +256,6 @@ function generatePDFStream(rawOutput, meta = {}) {
       break;
   }
 
-  // ── Footer on each page ───────────────────────────────────────────────────
-  const totalPages = doc.bufferedPageRange ? doc.bufferedPageRange().count : 1;
-  doc
-    .fontSize(8)
-    .fillColor('#94a3b8')
-    .text(
-      `OmniBridge AI Gateway  •  ${new Date().getFullYear()}  •  Confidential`,
-      64,
-      doc.page.height - 40,
-      { align: 'center', width: doc.page.width - 128 }
-    );
-
   doc.end();
 
   return { stream: passthrough, mimeType: 'application/pdf', filename };
@@ -327,7 +291,7 @@ function generateCodeFileStream(rawOutput, opts = {}) {
   }
 
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const filename = opts.filename || `omnibridge_${timestamp}.${langInfo.ext}`;
+  const filename = opts.filename || `document_${timestamp}.${langInfo.ext}`;
 
   // Create a pure in-memory Readable from the code string buffer
   const stream = Readable.from([Buffer.from(code, 'utf-8')]);
@@ -351,7 +315,7 @@ function generateCodeFileStream(rawOutput, opts = {}) {
  */
 function generateMarkdownFileStream(rawOutput, opts = {}) {
   const timestamp = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-  const filename = opts.filename || `omnibridge_${timestamp}.md`;
+  const filename = opts.filename || `document_${timestamp}.md`;
   const content = typeof rawOutput === 'string' ? rawOutput : JSON.stringify(rawOutput, null, 2);
 
   return {
@@ -374,7 +338,7 @@ function _buildSections(text) {
       if (current) sections.push(current);
       current = {
         level: headingMatch[1].length,
-        heading: headingMatch[2].trim(),
+        heading: headingMatch[2].replace(/(\*\*|__|`)/g, '').trim(),
         body: ''
       };
     } else if (current) {
@@ -390,11 +354,11 @@ function _buildSections(text) {
 
 function _pdfAddMarkdownSections(doc, sections) {
   const HEADING_STYLES = {
-    1: { size: 18, font: 'Helvetica-Bold', color: '#0f172a', gap: 1.2 },
-    2: { size: 14, font: 'Helvetica-Bold', color: '#1e3a5f', gap: 1.0 },
-    3: { size: 12, font: 'Helvetica-Bold', color: '#334155', gap: 0.8 },
-    4: { size: 11, font: 'Helvetica-Bold', color: '#475569', gap: 0.6 },
-    5: { size: 10, font: 'Helvetica',      color: '#64748b', gap: 0.4 },
+    1: { size: 18, font: 'Helvetica-Bold', color: '#0f172a', gap: 0.8 },
+    2: { size: 14, font: 'Helvetica-Bold', color: '#1e293b', gap: 0.6 },
+    3: { size: 12, font: 'Helvetica-Bold', color: '#334155', gap: 0.5 },
+    4: { size: 11, font: 'Helvetica-Bold', color: '#475569', gap: 0.4 },
+    5: { size: 10, font: 'Helvetica',      color: '#64748b', gap: 0.3 },
     6: { size: 9,  font: 'Helvetica',      color: '#94a3b8', gap: 0.3 }
   };
 
@@ -413,30 +377,67 @@ function _pdfAddMarkdownSections(doc, sections) {
       const stripped = line.trim();
       if (!stripped) { doc.moveDown(0.3); continue; }
 
+      // Horizontal Rules
+      if (/^(---|===|\*\*\*|___)$/.test(stripped)) {
+        doc
+          .moveTo(72, doc.y + 4)
+          .lineTo(doc.page.width - 72, doc.y + 4)
+          .strokeColor('#cbd5e1')
+          .lineWidth(0.75)
+          .stroke();
+        doc.moveDown(0.6);
+        continue;
+      }
+
+      // Callouts / Quotes
+      if (stripped.startsWith('>')) {
+        const quoteText = stripped.replace(/^>\s*/, '').replace(/(\*\*|__|`)/g, '');
+        const currentY = doc.y;
+        doc
+          .moveTo(76, currentY)
+          .lineTo(76, currentY + 14)
+          .strokeColor('#3b82f6')
+          .lineWidth(2)
+          .stroke();
+        doc
+          .fillColor('#334155')
+          .fontSize(10)
+          .font('Helvetica-Oblique')
+          .text(quoteText, 84, currentY, { lineGap: 2 });
+        doc.moveDown(0.4);
+        continue;
+      }
+
       // Bullet list items
       if (stripped.startsWith('- ') || stripped.startsWith('* ') || stripped.startsWith('+ ')) {
-        doc
-          .fillColor('#334155')
-          .fontSize(10)
-          .font('Helvetica')
-          .text('  • ' + stripped.slice(2), { indent: 10 });
-      }
-      // Numbered list items
-      else if (/^\d+\.\s/.test(stripped)) {
-        doc
-          .fillColor('#334155')
-          .fontSize(10)
-          .font('Helvetica')
-          .text('  ' + stripped, { indent: 10 });
-      }
-      // Bold spans **text**
-      else {
-        const cleaned = stripped.replace(/\*\*(.+?)\*\*/g, '$1').replace(/\*(.+?)\*/g, '$1');
+        const cleanListText = stripped.replace(/^[\-\*\+]\s+/, '').replace(/(\*\*|__|`)/g, '');
         doc
           .fillColor('#1e293b')
           .fontSize(10)
           .font('Helvetica')
-          .text(cleaned, { lineGap: 2 });
+          .text('• ' + cleanListText, 84, doc.y, { lineGap: 2 });
+      }
+      // Numbered list items
+      else if (/^\d+\.\s/.test(stripped)) {
+        const cleanListText = stripped.replace(/(\*\*|__|`)/g, '');
+        doc
+          .fillColor('#1e293b')
+          .fontSize(10)
+          .font('Helvetica')
+          .text(cleanListText, 84, doc.y, { lineGap: 2 });
+      }
+      // Body Text
+      else {
+        const cleaned = stripped
+          .replace(/^#{1,6}\s+/, '')
+          .replace(/\*\*(.+?)\*\*/g, '$1')
+          .replace(/\*(.+?)\*/g, '$1')
+          .replace(/`(.+?)`/g, '$1');
+        doc
+          .fillColor('#1e293b')
+          .fontSize(10.5)
+          .font('Helvetica')
+          .text(cleaned, 72, doc.y, { lineGap: 3 });
       }
     }
     doc.moveDown(0.8);
@@ -447,17 +448,19 @@ function _pdfAddBodyText(doc, text) {
   const paragraphs = text.split(/\n{2,}/);
   for (const para of paragraphs) {
     const cleaned = para
-      .replace(/```[\s\S]*?```/g, '[code block — see code file export]')
+      .replace(/```[\s\S]*?```/g, '')
       .replace(/\*\*(.+?)\*\*/g, '$1')
       .replace(/\*(.+?)\*/g, '$1')
       .replace(/^#{1,6}\s+/gm, '')
+      .replace(/^>\s+/gm, '')
+      .replace(/^(---|===|\*\*\*|___)$/gm, '')
       .trim();
 
     if (!cleaned) continue;
 
     doc
       .fillColor('#1e293b')
-      .fontSize(10)
+      .fontSize(10.5)
       .font('Helvetica')
       .text(cleaned, { lineGap: 3 })
       .moveDown(0.6);

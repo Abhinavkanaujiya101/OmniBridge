@@ -18,7 +18,7 @@ export default function ChatHistoryPanel({
         <div className="flex items-center gap-2">
           <Clock className="w-4 h-4 text-sky-400" />
           <h3 className="text-xs font-semibold uppercase text-gray-300 tracking-wider font-mono flex items-center gap-1.5">
-            💬 <span>Chat History</span>
+            <span>Chat History</span>
           </h3>
         </div>
 
@@ -29,7 +29,7 @@ export default function ChatHistoryPanel({
             title="Start a new chat session"
           >
             <Plus className="w-3 h-3" />
-            <span>✨ New</span>
+            <span>New</span>
           </button>
 
           {sessions.length > 0 && (
@@ -38,7 +38,7 @@ export default function ChatHistoryPanel({
               className="text-[11px] text-gray-500 hover:text-red-400 font-mono transition-colors"
               title="Clear all saved history"
             >
-              🗑️ Clear
+              Clear
             </button>
           )}
         </div>
@@ -49,8 +49,8 @@ export default function ChatHistoryPanel({
         {sessions.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-4 space-y-1 text-gray-500">
             <MessageSquare className="w-6 h-6 text-gray-600 mb-1" />
-            <p className="text-xs font-sans">💬 No saved chats yet</p>
-            <p className="text-[10px] text-gray-600 font-mono">🚀 Send a prompt to start a chat session!</p>
+            <p className="text-xs font-sans">No saved chats yet</p>
+            <p className="text-[10px] text-gray-600 font-mono">Send a prompt to start a chat session!</p>
           </div>
         ) : (
           sessions.map((session) => {

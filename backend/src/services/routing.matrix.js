@@ -20,7 +20,7 @@
 
 const config = require('../config/env');
 
-/** @typedef {'TEXT'|'MATH'|'IMAGE_GENERATION'|'VIDEO_GENERATION'|'CODE'} TaskType */
+/** @typedef {'TEXT'|'DOCUMENT_GENERATION'|'IMAGE_GENERATION'|'VIDEO_GENERATION'|'CODE'} TaskType */
 
 /**
  * @typedef {Object} RouteRule
@@ -79,38 +79,38 @@ const ROUTING_MATRIX = {
     }
   ],
 
-  // ── MATH: Step-by-step reasoning, formal proofs, calculations ─────────────
-  MATH: [
+  // ── DOCUMENT_GENERATION: Multi-format document synthesis, reports, H1/H2 formatting ─────────
+  DOCUMENT_GENERATION: [
     {
       provider: 'gemini',
       model: 'gemini-1.5-flash',
-      estimatedLatencyMs: 1000,
+      estimatedLatencyMs: 900,
       costTier: 'low',
-      capability: 'Strong mathematical reasoning with chain-of-thought',
+      capability: 'Optimal structured document synthesis, long context reports, H1/H2 formatting',
       supportsStream: true
     },
     {
       provider: 'openai',
       model: 'gpt-4o-mini',
-      estimatedLatencyMs: 1400,
+      estimatedLatencyMs: 1300,
       costTier: 'low',
-      capability: 'Reliable arithmetic and algebraic problem solving',
+      capability: 'Reliable document structure, executive summaries, bullet points',
       supportsStream: true
     },
     {
-      provider: 'together',
-      model: 'mistralai/Mixtral-8x7B-Instruct-v0.1',
-      estimatedLatencyMs: 2000,
+      provider: 'groq',
+      model: 'llama-3.1-8b-instant',
+      estimatedLatencyMs: 400,
       costTier: 'low',
-      capability: 'Mixture of Experts model, strong at structured reasoning',
+      capability: 'Ultra-fast text document generation and report drafting',
       supportsStream: true
     },
     {
       provider: 'openai',
       model: 'gpt-4o',
-      estimatedLatencyMs: 3000,
+      estimatedLatencyMs: 2800,
       costTier: 'high',
-      capability: 'Best-in-class for complex proofs and multi-step derivations',
+      capability: 'Maximum quality synthesis for complex executive reports and research papers',
       supportsStream: true
     }
   ],

@@ -380,25 +380,39 @@ function generateSandboxResponse({ provider, model, taskType, prompt }) {
     };
   }
 
-  if (taskType === 'MATH') {
-    const cleanExpr = norm.replace(/what\s+is|calculate|compute|solve|\?/gi, '').trim();
-    let calcVal = null;
-    if (/^[\d\s+\-*/^().]+$/.test(cleanExpr)) {
-      try {
-        calcVal = Function(`"use strict"; return (${cleanExpr.replace(/\^/g, '**')});`)();
-      } catch (_) {}
-    }
+  if (taskType === 'DOCUMENT_GENERATION') {
+    let rawTopic = norm ? norm.replace(/^(write|create|generate|draft|prepare)\s+(a\s+)?(report|document|file|pdf|word)?\s*(on|about|for)?\s*/i, '').trim() : 'Healthcare System Reform';
+    if (!rawTopic || rawTopic.length < 3) rawTopic = 'Healthcare System Reform';
+    
+    const formattedTitle = rawTopic
+      .split(' ')
+      .map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+      .join(' ');
+    
+    const displayTitle = formattedTitle.toLowerCase().includes('health')
+      ? 'Healthcare System Reform: A Comprehensive Approach'
+      : formattedTitle;
 
-    if (calcVal !== null && !isNaN(calcVal)) {
-      return {
-        output: `**Result:** ${calcVal}`,
-        usage: { promptTokens: 10, completionTokens: 15, totalTokens: 25 }
-      };
-    }
+    const docOutput = `# ${displayTitle}
+
+## Executive Summary
+This document provides a comprehensive analysis and structured overview regarding **${displayTitle}**. Designed for executive presentation, this report aggregates key findings, operational insights, and strategic recommendations.
+
+## Key Findings & Strategic Insights
+- **Primary Objective:** Deliver structured, high-clarity insights tailored for executive decision makers.
+- **Multi-Format Export Readiness:** Full compliance for publishing as PDF (.pdf), Word (.docx), Markdown (.md), or Plain Text (.txt).
+- **Core Value:** Clean layout structure, executive summaries, and publication-ready typography.
+
+## Strategic Recommendations
+1. Review structured findings and key performance indicators.
+2. Export the full report using the **Download PDF** or **Download Word** controls below.
+3. Share with leadership and key stakeholders for strategic review.
+
+> *Executive Notice: Confirmed publication-ready document layout with standard 0.75-inch margins and structured section hierarchy.*`;
 
     return {
-      output: `To solve "${norm}", evaluate the mathematical expression step-by-step.`,
-      usage: { promptTokens: 20, completionTokens: 50, totalTokens: 70 }
+      output: docOutput,
+      usage: { promptTokens: 40, completionTokens: 180, totalTokens: 220 }
     };
   }
 
@@ -428,29 +442,29 @@ function generateSandboxResponse({ provider, model, taskType, prompt }) {
 
   if (lowerPrompt.includes('how are you') || lowerPrompt.includes('how r u') || lowerPrompt.includes('how do you do')) {
     return {
-      output: "I'm doing well, thank you for asking! I'm ready to assist you with code generation, mathematical analysis, image synthesis, or answering any questions. How can I help you today?",
-      usage: { promptTokens: 5, completionTokens: 35, totalTokens: 40 }
+      output: "I'm doing well, thank you for asking! How can I help you today?",
+      usage: { promptTokens: 5, completionTokens: 15, totalTokens: 20 }
     };
   }
 
   if (lowerPrompt.includes('who are you') || lowerPrompt.includes('what are you') || lowerPrompt.includes('your name')) {
     return {
-      output: "I am OmniBridge AI — an intelligent multi-provider AI gateway and intent routing engine capable of generating code, processing mathematical expressions, creating images, and answering complex queries.",
-      usage: { promptTokens: 6, completionTokens: 40, totalTokens: 46 }
+      output: "I am OmniBridge AI — an intelligent multi-provider AI gateway and intent routing engine.",
+      usage: { promptTokens: 6, completionTokens: 20, totalTokens: 26 }
     };
   }
 
   if (/^\s*(hi|hii|hello|hey|greetings|howdy|good\s+morning|good\s+evening)\s*\!*$/i.test(norm)) {
     return {
-      output: `Hello! 👋 How can I assist you today?\n\nOmniBridge is online and ready to process your questions, generate code, derive mathematical equations, or synthesize visual media.`,
-      usage: { promptTokens: 5, completionTokens: 40, totalTokens: 45 }
+      output: `Hello! 👋 How can I assist you today?`,
+      usage: { promptTokens: 5, completionTokens: 10, totalTokens: 15 }
     };
   }
 
   // Default TEXT response for general questions & text prompts
   return {
-    output: `I'm here to help answer your query about "${norm}". As an AI assistant powered by OmniBridge, I can assist you with answering questions, writing software code, solving math problems, or creating visual media. What specific details would you like to explore further?`,
-    usage: { promptTokens: 20, completionTokens: 65, totalTokens: 85 }
+    output: `I'm here to help answer your query about "${norm}". What specific details would you like to explore further?`,
+    usage: { promptTokens: 15, completionTokens: 25, totalTokens: 40 }
   };
 }
 

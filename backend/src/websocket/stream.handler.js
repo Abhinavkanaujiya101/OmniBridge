@@ -63,6 +63,10 @@ const ACTIONS = {
 function initWebSocketServer(server) {
   const wss = new WebSocket.Server({ server, path: undefined /* accept all paths */ });
 
+  wss.on('error', (err) => {
+    console.error('[WS Server Error]:', err.message);
+  });
+
   console.log('[WS] OmniBridge async WebSocket pipeline attached to HTTP server.');
 
   wss.on('connection', (ws, req) => {

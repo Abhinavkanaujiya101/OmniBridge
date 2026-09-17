@@ -27,9 +27,9 @@ const PROMPT_PRESETS = [
     taskType: 'IMAGE_GENERATION'
   },
   {
-    label: '📐 Math Derivation',
-    prompt: 'Calculate the definite integral of f(x) = x^3 + 2x^2 - 5x + 3 from x = 0 to 4.',
-    taskType: 'MATH'
+    label: '📄 Document Generation',
+    prompt: 'Write a comprehensive executive report on the impact of artificial intelligence in healthcare in 2026.',
+    taskType: 'DOCUMENT_GENERATION'
   },
   {
     label: '🎬 Generative Video',
@@ -45,6 +45,7 @@ export default function WorkspaceDashboard() {
   const [temperature, setTemperature] = useState(0.7);
   const [streaming, setStreaming] = useState(true);
   const [prompt, setPrompt] = useState('');
+  const [activePresetMode, setActivePresetMode] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Messages state for current chat session
@@ -74,7 +75,7 @@ export default function WorkspaceDashboard() {
       const next = !prev;
       try {
         localStorage.setItem('omnibridge_sidebar_open', JSON.stringify(next));
-      } catch (e) {}
+      } catch (e) { }
       return next;
     });
   };
@@ -126,7 +127,7 @@ export default function WorkspaceDashboard() {
         setActiveSessionId(currentId);
         try {
           localStorage.setItem('omnibridge_active_session_id', currentId);
-        } catch (e) {}
+        } catch (e) { }
         isNewSession = true;
       }
 
@@ -150,18 +151,18 @@ export default function WorkspaceDashboard() {
         updated = prevSessions.map((s) =>
           s.id === currentId
             ? {
-                ...s,
-                title: s.title || title,
-                updatedAt: Date.now(),
-                messages
-              }
+              ...s,
+              title: s.title || title,
+              updatedAt: Date.now(),
+              messages
+            }
             : s
         );
       }
 
       try {
         localStorage.setItem('omnibridge_sessions', JSON.stringify(updated));
-      } catch (e) {}
+      } catch (e) { }
 
       return updated;
     });
@@ -175,7 +176,7 @@ export default function WorkspaceDashboard() {
       setMessages(target.messages || []);
       try {
         localStorage.setItem('omnibridge_active_session_id', sessionId);
-      } catch (e) {}
+      } catch (e) { }
     }
   };
 
@@ -184,7 +185,7 @@ export default function WorkspaceDashboard() {
     setMessages([]);
     try {
       localStorage.removeItem('omnibridge_active_session_id');
-    } catch (e) {}
+    } catch (e) { }
   };
 
   const handleDeleteSession = (sessionId) => {
@@ -192,7 +193,7 @@ export default function WorkspaceDashboard() {
     setSessions(updated);
     try {
       localStorage.setItem('omnibridge_sessions', JSON.stringify(updated));
-    } catch (e) {}
+    } catch (e) { }
 
     if (activeSessionId === sessionId) {
       handleNewChat();
@@ -206,7 +207,7 @@ export default function WorkspaceDashboard() {
     try {
       localStorage.removeItem('omnibridge_sessions');
       localStorage.removeItem('omnibridge_active_session_id');
-    } catch (e) {}
+    } catch (e) { }
   };
 
   // Stop Execution action handler
@@ -216,10 +217,10 @@ export default function WorkspaceDashboard() {
       prev.map((msg) =>
         msg.loading
           ? {
-              ...msg,
-              loading: false,
-              error: 'Execution stopped by user.'
-            }
+            ...msg,
+            loading: false,
+            error: 'Execution stopped by user.'
+          }
           : msg
       )
     );
@@ -231,24 +232,28 @@ export default function WorkspaceDashboard() {
     if (!prompt.trim() || isSubmitting) return;
 
     const currentPrompt = prompt;
+    const currentPresetMode = activePresetMode;
     setPrompt('');
+    setActivePresetMode(null);
     setIsSubmitting(true);
 
     const messageId = Math.random().toString(36).substring(2, 9);
     const userMsg = { id: messageId, sender: 'user', text: currentPrompt, timestamp: new Date().toLocaleTimeString() };
-    
+
     setMessages((prev) => [...prev, userMsg]);
 
     if (routingMode === 'auto') {
       // Step 1: Pre-classify intent for instant UI telemetry feedback
       const cls = await classifyPrompt(currentPrompt);
-      
+
       const assistantMsgId = Math.random().toString(36).substring(2, 9);
       const initialAssistantMsg = {
         id: assistantMsgId,
         sender: 'assistant',
         loading: true,
         telemetry: {
+          userPrompt: currentPrompt,
+          presetMode: currentPresetMode,
           taskType: cls.taskType || 'TEXT',
           targetModel: cls.recommendedModel || 'gemini-1.5-flash',
           targetProvider: cls.recommendedProvider || 'gemini',
@@ -275,22 +280,22 @@ export default function WorkspaceDashboard() {
           prev.map((msg) =>
             msg.id === assistantMsgId
               ? {
-                  ...msg,
-                  loading: false,
-                  output: res.output,
-                  telemetry: {
-                    ...msg.telemetry,
-                    taskType: res.isCapabilityMismatch ? 'TEXT' : res.taskType,
-                    targetModel: res.targetModel,
-                    targetProvider: res.targetProvider,
-                    actualLatencyMs: res.actualLatencyMs || latencyMs,
-                    confidence: res.confidence,
-                    classificationMethod: res.classificationMethod,
-                    isCapabilityMismatch: res.isCapabilityMismatch || false
-                  },
-                  imageUrl: res.imageUrl,
-                  taskId: res.taskId
-                }
+                ...msg,
+                loading: false,
+                output: res.output,
+                telemetry: {
+                  ...msg.telemetry,
+                  taskType: res.isCapabilityMismatch ? 'TEXT' : res.taskType,
+                  targetModel: res.targetModel,
+                  targetProvider: res.targetProvider,
+                  actualLatencyMs: res.actualLatencyMs || latencyMs,
+                  confidence: res.confidence,
+                  classificationMethod: res.classificationMethod,
+                  isCapabilityMismatch: res.isCapabilityMismatch || false
+                },
+                imageUrl: res.imageUrl,
+                taskId: res.taskId
+              }
               : msg
           )
         );
@@ -306,12 +311,12 @@ export default function WorkspaceDashboard() {
           prev.map((msg) =>
             msg.id === assistantMsgId
               ? {
-                  ...msg,
-                  loading: false,
-                  isRateLimited: res.isRateLimited || false,
-                  error: res.error || 'Router dispatch failed',
-                  output: res.output || null
-                }
+                ...msg,
+                loading: false,
+                isRateLimited: res.isRateLimited || false,
+                error: res.error || 'Router dispatch failed',
+                output: res.output || null
+              }
               : msg
           )
         );
@@ -350,17 +355,17 @@ export default function WorkspaceDashboard() {
             prev.map((msg) =>
               msg.id === assistantMsgId
                 ? {
-                    ...msg,
-                    loading: false,
-                    output: res.data.output || 'No output received from provider.',
-                    telemetry: {
-                      ...msg.telemetry,
-                      actualLatencyMs: res.latencyMs || latencyMs,
-                      isCapabilityMismatch: res.data.isCapabilityMismatch || false,
-                      isRateLimited: res.data.isRateLimited || false,
-                      taskType: res.data.isCapabilityMismatch ? 'TEXT' : msg.telemetry?.taskType
-                    }
+                  ...msg,
+                  loading: false,
+                  output: res.data.output || 'No output received from provider.',
+                  telemetry: {
+                    ...msg.telemetry,
+                    actualLatencyMs: res.latencyMs || latencyMs,
+                    isCapabilityMismatch: res.data.isCapabilityMismatch || false,
+                    isRateLimited: res.data.isRateLimited || false,
+                    taskType: res.data.isCapabilityMismatch ? 'TEXT' : msg.telemetry?.taskType
                   }
+                }
                 : msg
             )
           );
@@ -376,11 +381,11 @@ export default function WorkspaceDashboard() {
             prev.map((msg) =>
               msg.id === assistantMsgId
                 ? {
-                    ...msg,
-                    loading: false,
-                    isRateLimited: res.data?.isRateLimited || (res.error && res.error.includes('429')) || false,
-                    error: res.error || 'Manual completion request failed'
-                  }
+                  ...msg,
+                  loading: false,
+                  isRateLimited: res.data?.isRateLimited || (res.error && res.error.includes('429')) || false,
+                  error: res.error || 'Manual completion request failed'
+                }
                 : msg
             )
           );
@@ -391,10 +396,10 @@ export default function WorkspaceDashboard() {
           prev.map((msg) =>
             msg.id === assistantMsgId
               ? {
-                  ...msg,
-                  loading: false,
-                  error: err.message || 'Gateway network error'
-                }
+                ...msg,
+                loading: false,
+                error: err.message || 'Gateway network error'
+              }
               : msg
           )
         );
@@ -469,7 +474,10 @@ export default function WorkspaceDashboard() {
           {PROMPT_PRESETS.map((preset, idx) => (
             <button
               key={idx}
-              onClick={() => setPrompt(preset.prompt)}
+              onClick={() => {
+                setPrompt(preset.prompt);
+                setActivePresetMode(preset.taskType);
+              }}
               className="shrink-0 text-xs px-3.5 py-1.5 rounded-lg bg-dark-surface/90 hover:bg-dark-surface border border-gray-800 text-gray-200 hover:border-gray-700 transition-all flex items-center gap-1.5 font-sans"
             >
               <span>{preset.label}</span>
@@ -480,12 +488,11 @@ export default function WorkspaceDashboard() {
 
       {/* 3. Main Dashboard Body: Collapsible Left Sidebar (Chat History) + Right Execution Canvas */}
       <div className="flex-1 min-h-0 flex gap-4 overflow-hidden relative">
-        
+
         {/* Left Sidebar Column (Chat History Panel) */}
         <div
-          className={`h-full min-h-0 overflow-hidden transition-all duration-300 ease-in-out shrink-0 ${
-            isSidebarOpen ? 'w-full lg:w-1/4 opacity-100' : 'w-0 opacity-0 pointer-events-none'
-          }`}
+          className={`h-full min-h-0 overflow-hidden transition-all duration-300 ease-in-out shrink-0 ${isSidebarOpen ? 'w-full lg:w-1/4 opacity-100' : 'w-0 opacity-0 pointer-events-none'
+            }`}
         >
           <ChatHistoryPanel
             sessions={sessions}
@@ -500,13 +507,13 @@ export default function WorkspaceDashboard() {
         {/* Right Main Execution Area: AI Response Workspace Terminal */}
         <div className="flex-1 flex flex-col h-full min-h-0 overflow-hidden transition-all duration-300 ease-in-out">
           <div className="glass-panel rounded-xl border border-gray-800 flex flex-col h-full min-h-0 overflow-hidden">
-            
+
             {/* Workspace Header Bar */}
             <div className="flex-none bg-dark-surface/80 px-4 py-2 border-b border-gray-800 flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <Sparkles className="w-4 h-4 text-sky-400" />
                 <span className="text-xs font-sans text-gray-200 font-semibold flex items-center gap-1">
-                  ✨ <span>AI Workspace</span>
+                  <span>AI Workspace</span>
                 </span>
               </div>
               <button
@@ -514,7 +521,7 @@ export default function WorkspaceDashboard() {
                 className="text-xs px-2.5 py-1 rounded-lg bg-dark-base hover:bg-gray-800 text-gray-300 hover:text-white border border-gray-700/60 transition-colors flex items-center gap-1.5 font-sans"
               >
                 <Plus className="w-3.5 h-3.5 text-sky-400" />
-                <span>✨ New Chat</span>
+                <span> New Chat</span>
               </button>
             </div>
 
@@ -544,7 +551,7 @@ export default function WorkspaceDashboard() {
                         <div className="bg-sky-600/20 border border-sky-500/30 text-sky-100 rounded-xl px-4 py-3 max-w-xl text-sm font-sans">
                           {msg.text}
                           <div className="text-[10px] font-sans text-sky-400/70 text-right mt-1">
-                            💬 {msg.timestamp}
+                            {msg.timestamp}
                           </div>
                         </div>
                       </div>
@@ -559,8 +566,8 @@ export default function WorkspaceDashboard() {
                               {msg.telemetry?.targetProvider === 'luma' || msg.telemetry?.taskType === 'VIDEO_GENERATION'
                                 ? '🎬 Generating video...'
                                 : msg.telemetry?.taskType === 'IMAGE_GENERATION'
-                                ? '🎨 Creating image...'
-                                : '🤖 Thinking...'}
+                                  ? '🎨 Creating image...'
+                                  : '🤖 Thinking...'}
                             </span>
                           </div>
                         ) : (msg.isRateLimited || msg.telemetry?.isRateLimited || (msg.error && (msg.error.includes('429') || msg.error.toLowerCase().includes('rate')))) ? (
@@ -598,6 +605,8 @@ export default function WorkspaceDashboard() {
                                 taskId={msg.taskId}
                                 language={msg.telemetry?.language}
                                 outputType={msg.telemetry?.outputType}
+                                taskType={msg.telemetry?.taskType}
+                                telemetry={msg.telemetry}
                               />
                             )}
                           </>
@@ -628,7 +637,7 @@ export default function WorkspaceDashboard() {
                     className="bg-red-600/20 hover:bg-red-600/30 border border-red-500/50 text-red-400 font-medium px-4 py-2.5 rounded-lg flex items-center gap-2 text-sm transition-all duration-200 shadow-lg shadow-red-600/10 animate-pulse shrink-0 font-sans"
                   >
                     <Square className="w-3.5 h-3.5 fill-red-400" />
-                    <span>🛑 Stop</span>
+                    <span> Stop</span>
                   </button>
                 ) : (
                   <button

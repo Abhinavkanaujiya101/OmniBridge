@@ -2,7 +2,7 @@
  * OmniBridge Semantic Intent Classifier
  * ─────────────────────────────────────────────────────────────────────────────
  * Categorizes incoming raw prompt payloads into one of five canonical task types:
- *   TEXT | MATH | IMAGE_GENERATION | VIDEO_GENERATION | CODE
+ *   TEXT | DOCUMENT_GENERATION | IMAGE_GENERATION | VIDEO_GENERATION | CODE
  *
  * Uses a tiered classification pipeline:
  *   1. Hard keyword/pattern matching  (O(1), zero-latency)
@@ -13,7 +13,7 @@
 
 'use strict';
 
-/** @typedef {'TEXT'|'MATH'|'IMAGE_GENERATION'|'VIDEO_GENERATION'|'CODE'} TaskType */
+/** @typedef {'TEXT'|'DOCUMENT_GENERATION'|'IMAGE_GENERATION'|'VIDEO_GENERATION'|'CODE'} TaskType */
 
 // ─── Tier-1: Hard keyword maps (exact phrase, case-insensitive) ───────────────
 
@@ -45,13 +45,13 @@ const HARD_KEYWORDS = {
     'how do i code', 'how do i implement', 'binary search tree', 'bst',
     'linked list', 'stack and queue', 'sorting algorithm'
   ],
-  MATH: [
-    'calculate', 'compute', 'solve', 'what is the integral', 'what is the derivative',
-    'find the value', 'evaluate the expression', 'simplify', 'factor',
-    'probability of', 'statistics for', 'standard deviation',
-    'linear regression', 'matrix multiplication', 'eigenvalue',
-    'fourier transform', 'laplace', 'differential equation',
-    'prove that', 'mathematical proof', 'limit of', 'sum of series'
+  DOCUMENT_GENERATION: [
+    'generate a document', 'generate document', 'write a report', 'create a report',
+    'write report on', 'generate a report', 'create a word file', 'create word file',
+    'generate pdf', 'create pdf', 'document generation', 'doc synthesis',
+    'write a document', 'prepare a report', 'summary report', 'executive report',
+    'draft a document', 'create a doc', 'write an article', 'write an essay',
+    'generate report', 'synthesize document', 'make a report', 'create report'
   ]
 };
 
@@ -85,14 +85,10 @@ const REGEX_PATTERNS = {
     /\b(npm|pip|cargo|go)\s+(install|run|build|test|start)\b/i,
     /\bmake\s+(clean|all|install|build|test)\b/i        // GNU make build target only
   ],
-  MATH: [
-    /\b\d+[\+\-\*\/\^]\d+\b/,                           // arithmetic expressions
-    /\b(integral|derivative|gradient|matrix|vector|tensor|eigenvalue|eigenvalues)\b/i,
-    /\b(sin|cos|tan|log|ln|exp|sqrt|lim|sum|prod)\s*[\(\d]/i,
-    /=\s*\?|solve\s+for\s+[a-z]/i,
-    /\d+\s*[+\-*/^]\s*\d+/,
-    /\\frac|\\sum|\\int|\\sqrt/,                         // LaTeX math fragments
-    /\b(equation|formula|theorem|lemma|proof|inequality)\b/i
+  DOCUMENT_GENERATION: [
+    /\b(write|create|generate|draft|prepare|synthesize)\s+(a\s+)?(report|document|word\s+file|pdf|summary|doc|executive\s+summary|whitepaper)\b/i,
+    /\b(report|document|word\s+file|pdf|essay|whitepaper)\s+(on|about|for|regarding)\b/i,
+    /\btext.?to.?doc(ument)?\b/i
   ]
 };
 
@@ -102,13 +98,13 @@ const SCORE_VOCAB = {
   VIDEO_GENERATION: ['video', 'animate', 'animation', 'cinematic', 'clip', 'footage', 'scene', 'motion', 'render', 'fps'],
   IMAGE_GENERATION: ['image', 'photo', 'picture', 'draw', 'painting', 'artwork', 'illustration', 'generate', 'portrait', 'landscape'],
   CODE: ['function', 'class', 'variable', 'loop', 'array', 'object', 'method', 'api', 'server', 'database', 'code', 'script', 'program', 'bug', 'error', 'syntax'],
-  MATH: ['solve', 'calculate', 'compute', 'equation', 'value', 'sum', 'matrix', 'probability', 'integral', 'proof', 'formula', 'number', 'algebra'],
+  DOCUMENT_GENERATION: ['report', 'document', 'summary', 'section', 'overview', 'executive', 'analysis', 'paper', 'word', 'pdf', 'article', 'draft', 'findings', 'conclusion'],
   TEXT: ['explain', 'describe', 'tell', 'write', 'what', 'how', 'why', 'summarize', 'translate', 'essay', 'paragraph', 'story', 'blog', 'article']
 };
 
 // ─── Exported Types ────────────────────────────────────────────────────────────
 
-const TASK_TYPES = ['TEXT', 'MATH', 'IMAGE_GENERATION', 'VIDEO_GENERATION', 'CODE'];
+const TASK_TYPES = ['TEXT', 'DOCUMENT_GENERATION', 'IMAGE_GENERATION', 'VIDEO_GENERATION', 'CODE'];
 
 // ─── Core Classification Logic ────────────────────────────────────────────────
 
@@ -129,12 +125,12 @@ function evaluateComplexity(prompt, taskType) {
   const norm = (prompt || '').toLowerCase();
   const isComplexSignal =
     /\b(system architecture|distributed system|microservices|design pattern|deep analytical|security audit|performance benchmark|multi-step reasoning|formal proof|complex refactor)\b/i.test(norm) ||
-    (prompt.length > 600 && (taskType === 'CODE' || taskType === 'MATH'));
+    (prompt.length > 600 && (taskType === 'CODE' || taskType === 'DOCUMENT_GENERATION'));
 
   if (isComplexSignal) {
     return { complexity: 'complex', temperature: 0.2, preferHeavyModel: true };
   }
-  if (taskType === 'CODE' || taskType === 'MATH') {
+  if (taskType === 'CODE' || taskType === 'DOCUMENT_GENERATION') {
     return { complexity: 'basic', temperature: 0.2, preferHeavyModel: false };
   }
   return { complexity: 'casual', temperature: 0.7, preferHeavyModel: false };
@@ -168,7 +164,7 @@ function classifyIntent(prompt) {
     rawResult = { taskType: 'CODE', confidence: 0.98, method: 'code-priority' };
   } else {
     // ── Tier 1: Hard keyword match ─────────────────────────────────────────
-    const tier1Order = ['VIDEO_GENERATION', 'IMAGE_GENERATION', 'CODE', 'MATH'];
+    const tier1Order = ['VIDEO_GENERATION', 'IMAGE_GENERATION', 'CODE', 'DOCUMENT_GENERATION'];
     for (const taskType of tier1Order) {
       const keywords = HARD_KEYWORDS[taskType];
       for (const kw of keywords) {
@@ -183,7 +179,7 @@ function classifyIntent(prompt) {
 
   if (!rawResult) {
     // ── Tier 2: Regex heuristic match ─────────────────────────────────────────
-    const tier2Order = ['VIDEO_GENERATION', 'IMAGE_GENERATION', 'CODE', 'MATH'];
+    const tier2Order = ['VIDEO_GENERATION', 'IMAGE_GENERATION', 'CODE', 'DOCUMENT_GENERATION'];
     for (const taskType of tier2Order) {
       const patterns = REGEX_PATTERNS[taskType];
       for (const pattern of patterns) {
@@ -239,12 +235,13 @@ function classifyIntent(prompt) {
 function optimizePrompt(prompt, taskType) {
   const trimmed = (prompt || '').trim();
 
-  const formattingInstruction = `Respond using clean markdown with clear headings (#, ##, ###), bold key terms, structured bullet/numbered lists, and relevant emojis for key section titles and takeaways. Make the response highly visual, readable, and structured.`;
+  const textProportionalDirective = `[System Directive: Match response length directly to user prompt scope. For brief greetings (e.g., 'hey', 'hello', 'hi'), respond with a simple, concise 1-sentence greeting. Do NOT list conversation categories, menus, or bullet points unless explicitly asked.]`;
 
   const templates = {
-    TEXT: (p) => `${p}\n\n[Instruction: ${formattingInstruction}]`,
-    MATH: (p) => `${p}\n\n[Instruction: Provide step-by-step mathematical reasoning using clear markdown headings with emojis, bold equations, and structured numbered/bullet lists.]`,
-    CODE: (p) => `${p}\n\n[Instruction: Provide clean, production-ready code blocks along with concise markdown explanations, section headings with emojis, and bullet points.]`,
+    TEXT: (p) => `${p}\n\n${textProportionalDirective}`,
+    DOCUMENT_GENERATION: (p) =>
+      `${p}\n\n[System Directive: Provide a comprehensive, highly structured professional document. Format the response with clean markdown headers (H1 for Title, H2 for major sections, H3 for sub-sections), an Executive Summary, key findings with bullet points, numbered lists where appropriate, callout quotes (>), and structured conclusions. Maintain a polished, professional document format suitable for direct export to PDF or Word.]`,
+    CODE: (p) => `${p}\n\n[System Directive: Provide clean, production-ready code blocks along with concise markdown explanations, section headings, and bullet points.]`,
     IMAGE_GENERATION: (p) =>
       `${p}, highly detailed, professional quality, sharp focus, vibrant lighting`,
     VIDEO_GENERATION: (p) =>

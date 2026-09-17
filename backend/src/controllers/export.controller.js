@@ -35,8 +35,8 @@ class ExportController {
 
     try {
       const { stream, mimeType, filename } = generatePDFStream(output, {
-        title: title || `OmniBridge — ${task.taskType}`,
-        author: 'OmniBridge AI Gateway',
+        title: title || 'Executive Report',
+        author: '',
         taskType: task.taskType,
         provider: task.result?.targetProvider || task.provider
       });

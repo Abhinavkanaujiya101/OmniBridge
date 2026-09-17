@@ -6,7 +6,7 @@ import { Sliders, Sparkles, Layers, Thermometer, Radio } from 'lucide-react';
 const PROVIDER_OPTIONS = [
   {
     id: 'gemini',
-    name: '✨ Gemini',
+    name: 'Gemini',
     fullName: 'Google Gemini',
     models: ['gemini-1.5-flash', 'gemini-1.5-pro'],
     badge: 'Fast',
@@ -14,7 +14,7 @@ const PROVIDER_OPTIONS = [
   },
   {
     id: 'openai',
-    name: '🧠 OpenAI',
+    name: 'OpenAI',
     fullName: 'OpenAI',
     models: ['gpt-4o-mini', 'gpt-4o'],
     badge: 'GPT-4o',
@@ -22,7 +22,7 @@ const PROVIDER_OPTIONS = [
   },
   {
     id: 'together',
-    name: '🦙 Together',
+    name: 'Together',
     fullName: 'Together AI',
     models: ['meta-llama/Llama-3-70b-chat-hf', 'mistralai/Mixtral-8x7B-Instruct-v0.1'],
     badge: 'Llama-3',
@@ -30,7 +30,7 @@ const PROVIDER_OPTIONS = [
   },
   {
     id: 'luma',
-    name: '🎬 Luma',
+    name: 'Luma',
     fullName: 'Luma Dream Machine',
     models: ['dream-machine', 'ray-1', 'ray-2'],
     badge: 'Video',
@@ -55,7 +55,7 @@ export default function ProviderSelector({
       {/* 1. Compact Provider Selector Tabs */}
       <div className="flex items-center gap-1.5">
         <span className="text-gray-400 font-mono text-[11px] font-semibold flex items-center gap-1 mr-1">
-          <Sliders className="w-3.5 h-3.5 text-sky-400" /> 🎛️ Provider:
+          <Sliders className="w-3.5 h-3.5 text-sky-400" /> Provider:
         </span>
         <div className="bg-dark-base p-1 rounded-lg border border-gray-800/80 flex items-center gap-1">
           {PROVIDER_OPTIONS.map((provider) => {
@@ -85,7 +85,7 @@ export default function ProviderSelector({
       <div className="flex flex-wrap items-center gap-4">
         {/* Model Variant */}
         <div className="flex items-center gap-1.5 font-mono">
-          <span className="text-gray-400 text-[11px]">🤖 Model:</span>
+          <span className="text-gray-400 text-[11px]">Model:</span>
           <select
             value={selectedModel}
             onChange={(e) => setSelectedModel(e.target.value)}
@@ -102,7 +102,7 @@ export default function ProviderSelector({
         {/* Temperature Slider */}
         <div className="flex items-center gap-2 font-mono">
           <span className="text-gray-400 text-[11px] flex items-center gap-1">
-            <Thermometer className="w-3 h-3 text-amber-400" /> 🌡️ Temp:
+            <Thermometer className="w-3 h-3 text-amber-400" /> Temp:
           </span>
           <input
             type="range"
@@ -118,7 +118,7 @@ export default function ProviderSelector({
 
         {/* Streaming Mode Toggle */}
         <div className="flex items-center gap-2 font-mono">
-          <span className="text-gray-400 text-[11px]">⚡ Stream:</span>
+          <span className="text-gray-400 text-[11px]">Stream:</span>
           <button
             onClick={() => setStreaming(!streaming)}
             className={`relative inline-flex h-4.5 w-8 items-center rounded-full transition-colors ${

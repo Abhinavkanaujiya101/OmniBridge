@@ -1,8 +1,9 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Copy, Check, FileText, Code2, Download, FileCode, ExternalLink } from 'lucide-react';
+import { Copy, Check, FileText, Code2, Download, FileCode, ExternalLink, ChevronDown, File, Sparkles } from 'lucide-react';
 import { getExportUrl } from '../lib/api';
+import { exportToPdf, exportToWord, exportToMarkdown, exportToTxt } from '../lib/documentExporter';
 
 export default function CodeMarkdownCard({
   rawOutput = '',
@@ -10,61 +11,141 @@ export default function CodeMarkdownCard({
   language = null,
   codeBlocks = [],
   outputType = 'text',
-  exports = []
+  exports = [],
+  taskType = 'TEXT',
+  telemetry = {}
 }) {
   const [copiedIndex, setCopiedIndex] = useState(null);
+  const [isExportMenuOpen, setIsExportMenuOpen] = useState(false);
+  const [exportingFormat, setExportingFormat] = useState(null);
 
   const handleCopy = (text, idx) => {
-    navigator.clipboard.writeText(text);
-    setCopiedIndex(idx);
-    setTimeout(() => setCopiedIndex(null), 2000);
+    try {
+      navigator.clipboard.writeText(text || '');
+      setCopiedIndex(idx);
+      setTimeout(() => setCopiedIndex(null), 2000);
+    } catch (e) {
+      console.warn('Copy failed:', e);
+    }
   };
 
+  // Safe text extraction guaranteed not to throw runtime errors
+  const safeText = typeof rawOutput === 'string'
+    ? rawOutput
+    : (rawOutput && typeof rawOutput === 'object' && rawOutput.output)
+    ? rawOutput.output
+    : (rawOutput ? String(rawOutput) : '');
+
   // Helper to extract code block list if not passed explicitly
-  const blocks = codeBlocks.length > 0 ? codeBlocks : extractBlocksFromText(rawOutput);
+  const blocks = codeBlocks.length > 0 ? codeBlocks : extractBlocksFromText(safeText);
+
+  // Metadata object for export files
+  const meta = {
+    title: telemetry?.promptTitle || null,
+    userPrompt: telemetry?.userPrompt || '',
+    model: telemetry?.targetModel || 'AI Model',
+    provider: telemetry?.targetProvider || 'AI Gateway',
+    taskType: taskType || telemetry?.taskType || 'TEXT',
+    timestamp: new Date().toLocaleString()
+  };
+
+  const handleClientExport = async (format) => {
+    try {
+      setExportingFormat(format);
+      if (format === 'pdf') {
+        exportToPdf(safeText, meta);
+      } else if (format === 'word') {
+        await exportToWord(safeText, meta);
+      } else if (format === 'md') {
+        exportToMarkdown(safeText, meta);
+      } else if (format === 'txt') {
+        exportToTxt(safeText, meta);
+      }
+    } catch (err) {
+      console.error(`Export failed for format ${format}:`, err);
+    } finally {
+      setExportingFormat(null);
+      setIsExportMenuOpen(false);
+    }
+  };
+
+  const isDocumentTask =
+    taskType === 'DOCUMENT_GENERATION' ||
+    telemetry?.taskType === 'DOCUMENT_GENERATION' ||
+    telemetry?.presetMode === 'DOCUMENT_GENERATION';
 
   return (
     <div className="space-y-4 my-2">
-      {/* Download / Export Toolbar if taskId exists */}
-      {taskId && (
-        <div className="flex flex-wrap items-center gap-2 bg-dark-surface/60 border border-gray-800 rounded-lg p-2 text-xs">
-          <span className="text-gray-400 font-mono text-[11px] flex items-center gap-1">
-            <Download className="w-3.5 h-3.5 text-sky-400" /> Export Options:
-          </span>
+      {/* 1. Multi-Format "Export As" Action Bar rendered ONLY when intent/preset is DOCUMENT_GENERATION */}
+      {isDocumentTask && (
+        <div className="flex flex-wrap items-center justify-between gap-2 bg-dark-surface/80 border border-gray-800 rounded-xl p-2.5 text-xs shadow-md">
+          <div className="flex items-center gap-2">
+            <span className="text-gray-400 font-mono text-[11px] flex items-center gap-1.5 font-semibold">
+              <Download className="w-3.5 h-3.5 text-sky-400" /> Export As:
+            </span>
 
-          <a
-            href={getExportUrl('pdf', taskId)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 font-mono transition-colors"
-          >
-            <FileText className="w-3.5 h-3.5" /> PDF
-          </a>
-
-          {blocks.map((block, i) => (
-            <a
-              key={i}
-              href={getExportUrl('code', taskId, { language: block.language, blockIndex: i })}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 font-mono transition-colors"
+            {/* PDF Export Button */}
+            <button
+              onClick={() => handleClientExport('pdf')}
+              disabled={exportingFormat === 'pdf'}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-sky-500/10 hover:bg-sky-500/20 text-sky-400 border border-sky-500/20 font-mono transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+              title="Download PDF Document (.pdf)"
             >
-              <FileCode className="w-3.5 h-3.5" /> .{block.language || 'txt'}
-            </a>
-          ))}
+              <FileText className="w-3.5 h-3.5 text-sky-400" />
+              <span>PDF (.pdf)</span>
+            </button>
 
-          <a
-            href={getExportUrl('markdown', taskId)}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 font-mono transition-colors"
-          >
-            <ExternalLink className="w-3.5 h-3.5" /> Markdown
-          </a>
+            {/* Word Export Button */}
+            <button
+              onClick={() => handleClientExport('word')}
+              disabled={exportingFormat === 'word'}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/20 font-mono transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+              title="Download Native Word Document (.docx)"
+            >
+              <File className="w-3.5 h-3.5 text-indigo-400" />
+              <span>Word (.docx)</span>
+            </button>
+
+            {/* Markdown Export Button */}
+            <button
+              onClick={() => handleClientExport('md')}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 border border-purple-500/20 font-mono transition-all hover:scale-[1.02] active:scale-95"
+              title="Download Clean Markdown File (.md)"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-purple-400" />
+              <span>Markdown (.md)</span>
+            </button>
+
+            {/* Plain Text Export Button */}
+            <button
+              onClick={() => handleClientExport('txt')}
+              className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-500/10 hover:bg-gray-500/20 text-gray-300 border border-gray-500/20 font-mono transition-all hover:scale-[1.02] active:scale-95"
+              title="Download Raw Plain Text (.txt)"
+            >
+              <FileCode className="w-3.5 h-3.5 text-gray-400" />
+              <span>Text (.txt)</span>
+            </button>
+          </div>
+
+          {/* Code Block direct exports if code is present */}
+          {blocks.length > 0 && taskId && (
+            <div className="flex items-center gap-1.5">
+              {blocks.map((block, i) => (
+                <a
+                  key={i}
+                  href={getExportUrl('code', taskId, { blockIndex: i, language: block.language })}
+                  download
+                  className="flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 font-mono text-[10px] transition-colors"
+                >
+                  <Code2 className="w-3 h-3" /> .{block.language || 'txt'}
+                </a>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
-      {/* Render Code Blocks with Copy Controls */}
+      {/* 2. Render Code Blocks or Markdown Prose Content */}
       {blocks.length > 0 ? (
         <div className="space-y-4">
           {blocks.map((block, idx) => (
@@ -102,16 +183,48 @@ export default function CodeMarkdownCard({
           ))}
 
           {/* Render remaining text if any */}
-          {getSurroundingText(rawOutput).trim() && (
+          {getSurroundingText(safeText).trim() && (
             <div className="bg-dark-surface/40 p-4 rounded-xl border border-gray-800/80 shadow-md">
-              <MarkdownProseRenderer content={getSurroundingText(rawOutput)} />
+              <MarkdownProseRenderer content={getSurroundingText(safeText)} />
             </div>
           )}
         </div>
       ) : (
         /* Regular Prose / Markdown Text */
         <div className="bg-dark-surface/40 p-4.5 rounded-xl border border-gray-800/80 shadow-md">
-          <MarkdownProseRenderer content={rawOutput} />
+          <MarkdownProseRenderer content={safeText} />
+        </div>
+      )}
+
+      {/* 3. Automatic Prominent Primary Buttons for Document Generation Responses */}
+      {isDocumentTask && (
+        <div className="p-3 bg-gradient-to-r from-sky-950/40 via-indigo-950/30 to-purple-950/20 border border-sky-500/30 rounded-xl flex flex-wrap items-center justify-between gap-3 mt-4">
+          <div className="flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-sky-400 animate-pulse" />
+            <span className="text-xs font-sans text-sky-200 font-medium">
+              Document Synthesis Ready for Multi-Format Export:
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={() => handleClientExport('pdf')}
+              disabled={exportingFormat === 'pdf'}
+              className="px-3.5 py-1.5 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs font-sans flex items-center gap-1.5 shadow-lg shadow-sky-600/20 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+            >
+              <FileText className="w-3.5 h-3.5" />
+              <span>{exportingFormat === 'pdf' ? 'Generating PDF...' : 'Download PDF'}</span>
+            </button>
+
+            <button
+              onClick={() => handleClientExport('word')}
+              disabled={exportingFormat === 'word'}
+              className="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs font-sans flex items-center gap-1.5 shadow-lg shadow-indigo-600/20 transition-all hover:scale-[1.02] active:scale-95 disabled:opacity-50"
+            >
+              <File className="w-3.5 h-3.5" />
+              <span>{exportingFormat === 'word' ? 'Generating Word...' : 'Download Word'}</span>
+            </button>
+          </div>
         </div>
       )}
     </div>
