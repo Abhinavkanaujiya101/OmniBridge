@@ -45,6 +45,48 @@ OmniBridge/
 └── README.md
 ```
 
+## 📦 Dependencies & Technology Stack
+
+OmniBridge is structured as an isolated multi-package repository. Each subproject maintains its own focused dependency tree:
+
+### 1. Root Workspace Orchestrator
+| Package | Version | Purpose |
+| :--- | :--- | :--- |
+| [`concurrently`](https://www.npmjs.com/package/concurrently) | `^8.2.2` | Runs both backend and frontend development servers concurrently in a single terminal via `npm run dev` |
+
+---
+
+### 2. Backend Gateway & Streaming Server (`backend/package.json`)
+| Package | Version | Category | Purpose |
+| :--- | :--- | :--- | :--- |
+| [`express`](https://www.npmjs.com/package/express) | `^4.19.2` | Core Server | Fast, unopinionated REST API web framework |
+| [`ws`](https://www.npmjs.com/package/ws) | `^8.18.0` | Streaming | Ultra-fast native WebSocket server for low-latency token streaming |
+| [`socket.io`](https://www.npmjs.com/package/socket.io) | `^4.7.5` | Streaming | Event-driven bidirectional communication layer |
+| [`axios`](https://www.npmjs.com/package/axios) | `^1.7.2` | HTTP Client | Promise-based client for upstream AI provider dispatch (Groq, Gemini, OpenAI) |
+| [`dotenv`](https://www.npmjs.com/package/dotenv) | `^16.4.5` | Config | Multi-path environment variable loader |
+| [`cors`](https://www.npmjs.com/package/cors) | `^2.8.5` | Security | Express middleware for Cross-Origin Resource Sharing |
+| [`pdfkit`](https://www.npmjs.com/package/pdfkit) | `^0.15.2` | Export | Server-side publication-ready PDF document rendering |
+| [`@supabase/supabase-js`](https://www.npmjs.com/package/@supabase/supabase-js) | `^2.45.0` | Database | Supabase client for session storage and telemetry persistence |
+| [`pg`](https://www.npmjs.com/package/pg) | `^8.12.0` | Database | Native PostgreSQL client driver |
+| [`lumaai`](https://www.npmjs.com/package/lumaai) | `^1.19.1` | Generative AI | Official Luma Dream Machine text-to-video API SDK |
+| [`nodemon`](https://www.npmjs.com/package/nodemon) *(dev)* | `^3.1.4` | Tooling | Development server with auto-restart on code changes |
+
+---
+
+### 3. Frontend Web Console (`frontend/package.json`)
+| Package | Version | Category | Purpose |
+| :--- | :--- | :--- | :--- |
+| [`next`](https://www.npmjs.com/package/next) | `^14.2.4` | Framework | React production framework with App Router & server rendering |
+| [`react`](https://www.npmjs.com/package/react) | `^18.3.1` | UI Library | Core declarative user interface library |
+| [`react-dom`](https://www.npmjs.com/package/react-dom) | `^18.3.1` | UI Library | DOM renderer for React |
+| [`tailwindcss`](https://www.npmjs.com/package/tailwindcss) | `^3.4.4` | Styling | Utility-first CSS framework powering the dark glassmorphic UI |
+| [`postcss`](https://www.npmjs.com/package/postcss) & [`autoprefixer`](https://www.npmjs.com/package/autoprefixer) | Latest | Styling | CSS transformation and vendor prefix automation |
+| [`lucide-react`](https://www.npmjs.com/package/lucide-react) | `^0.400.0` | Icons | Clean, lightweight SVG icon system |
+| [`jspdf`](https://www.npmjs.com/package/jspdf) | `^4.2.1` | Export | Client-side instant PDF document generation and download |
+| [`docx`](https://www.npmjs.com/package/docx) | `^9.7.1` | Export | Client-side Microsoft Word (.docx) file synthesis |
+| [`socket.io-client`](https://www.npmjs.com/package/socket.io-client) | `^4.7.5` | Streaming | Real-time WebSocket connection to the streaming backend |
+| [`tailwind-merge`](https://www.npmjs.com/package/tailwind-merge) & [`clsx`](https://www.npmjs.com/package/clsx) | Latest | Styling | Conditional class name merging without Tailwind conflicts |
+
 ---
 
 ## 🚀 Quick Start
