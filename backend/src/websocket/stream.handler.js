@@ -280,7 +280,7 @@ async function handleSubmitTask(ws, payload, reply) {
   const task = registry.enqueue({
     taskType: cls.taskType,
     provider: primary?.provider || 'gemini',
-    model: primary?.model || 'gemini-1.5-flash',
+    model: primary?.model || 'gemini-3.6-flash',
     prompt,
     meta: { outputFormat, confidence: cls.confidence, classificationMethod: cls.method }
   });

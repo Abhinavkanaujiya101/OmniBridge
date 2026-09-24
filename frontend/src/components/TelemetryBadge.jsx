@@ -14,8 +14,8 @@ const TASK_TYPE_STYLES = {
 export default function TelemetryBadge({ telemetry = {} }) {
   const {
     taskType = 'TEXT',
-    targetModel = 'gemini-1.5-flash',
-    targetProvider = 'gemini'
+    targetModel = 'qwen/qwen3.8-27b',
+    targetProvider = 'groq'
   } = telemetry;
 
   const style = TASK_TYPE_STYLES[taskType] || TASK_TYPE_STYLES.TEXT;

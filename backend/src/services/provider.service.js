@@ -1,5 +1,8 @@
+const https = require('https');
 const axios = require('axios');
 const config = require('../config/env');
+
+const httpClient = axios.create({ timeout: 10000 });
 
 /**
  * Service Layer for Unified Multi-Provider Orchestration
@@ -13,16 +16,16 @@ class ProviderService {
       {
         id: 'groq',
         name: 'Groq Cloud',
-        models: ['llama-3.1-8b-instant', 'llama-3.3-70b-versatile', 'mixtral-8x7b-32768'],
+        models: ['qwen/qwen3.8-27b', 'openai/gpt-oss-20b', 'openai/gpt-oss-120b'],
         configured: Boolean(config.providers.groq?.apiKey),
-        defaultModel: 'llama-3.1-8b-instant'
+        defaultModel: 'qwen/qwen3.8-27b'
       },
       {
         id: 'gemini',
         name: 'Google Gemini',
-        models: ['gemini-1.5-pro', 'gemini-1.5-flash', 'gemini-1.0-pro'],
+        models: ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-2.5-pro'],
         configured: Boolean(config.providers.gemini.apiKey),
-        defaultModel: 'gemini-1.5-flash'
+        defaultModel: 'gemini-3.6-flash'
       },
       {
         id: 'openai',
@@ -226,9 +229,9 @@ class ProviderService {
   static async _dispatchDirectCall(provider, model, prompt, temperature = 0.7) {
     switch (provider) {
       case 'groq':
-        return await this._callGroq(model || 'llama-3.1-8b-instant', prompt, temperature);
+        return await this._callGroq(model || 'qwen/qwen3.8-27b', prompt, temperature);
       case 'gemini':
-        return await this._callGemini(model || 'gemini-1.5-flash', prompt, temperature);
+        return await this._callGemini(model || 'gemini-3.6-flash', prompt, temperature);
       case 'openai':
         return await this._callOpenAI(model || 'gpt-4o-mini', prompt, temperature);
       case 'together':
@@ -241,16 +244,20 @@ class ProviderService {
   }
 
   static async _callGroq(model, prompt, temperature = 0.7) {
+    const selectedModel = model || 'qwen/qwen3.8-27b';
     return await ProviderService.executeWithRetry(
       async () => {
         const apiKey = config.providers.groq?.apiKey;
         if (!apiKey) throw new Error('Groq API key is not configured in backend environment.');
 
+        const isBrief = (prompt || '').length < 35;
+        const max_tokens = isBrief ? 150 : 2048;
+
         const url = `${config.providers.groq.baseUrl}/chat/completions`;
-        const response = await axios.post(
+        const response = await httpClient.post(
           url,
           {
-            model: model || 'llama-3.1-8b-instant',
+            model: selectedModel,
             messages: [
               {
                 role: 'system',
@@ -258,25 +265,25 @@ class ProviderService {
               },
               { role: 'user', content: prompt }
             ],
-            temperature
+            temperature,
+            max_tokens
           },
           {
             headers: {
               Authorization: `Bearer ${apiKey}`,
               'Content-Type': 'application/json'
-            },
-            timeout: 30000
+            }
           }
         );
 
         return {
           provider: 'groq',
-          model: model || 'llama-3.1-8b-instant',
+          model: selectedModel,
           output: response.data?.choices?.[0]?.message?.content || '',
           usage: response.data?.usage || null
         };
       },
-      { providerLabel: `Groq (${model})` }
+      { providerLabel: `Groq (${selectedModel})` }
     );
   }
 
@@ -285,11 +292,9 @@ class ProviderService {
     if (!apiKey) throw new Error('Gemini API key is not configured in backend environment.');
 
     const candidateModels = [
-      model || 'gemini-1.5-flash',
-      'gemini-1.5-flash',
-      'gemini-2.0-flash-exp',
-      'gemini-1.5-pro',
-      'gemini-1.0-pro'
+      model || 'gemini-3.6-flash',
+      'gemini-3.6-flash',
+      'gemini-flash-latest'
     ].filter((m, i, self) => m && self.indexOf(m) === i);
 
     let lastError = null;

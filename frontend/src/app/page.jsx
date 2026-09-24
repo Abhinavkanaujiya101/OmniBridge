@@ -40,8 +40,8 @@ const PROMPT_PRESETS = [
 
 export default function WorkspaceDashboard() {
   const [routingMode, setRoutingMode] = useState('auto'); // 'auto' (Intent Router) | 'manual'
-  const [selectedProvider, setSelectedProvider] = useState('gemini');
-  const [selectedModel, setSelectedModel] = useState('gemini-1.5-flash');
+  const [selectedProvider, setSelectedProvider] = useState('groq');
+  const [selectedModel, setSelectedModel] = useState('qwen/qwen3.8-27b');
   const [temperature, setTemperature] = useState(0.7);
   const [streaming, setStreaming] = useState(true);
   const [prompt, setPrompt] = useState('');
@@ -83,9 +83,9 @@ export default function WorkspaceDashboard() {
   // Telemetry metric state
   const [metrics, setMetrics] = useState({
     status: 'OPERATIONAL',
-    provider: 'Gemini 1.5',
-    model: 'gemini-1.5-flash',
-    latency: 24,
+    provider: 'Groq Cloud',
+    model: 'qwen/qwen3.8-27b',
+    latency: 18,
     tokens: 420
   });
 
@@ -243,8 +243,12 @@ export default function WorkspaceDashboard() {
     setMessages((prev) => [...prev, userMsg]);
 
     if (routingMode === 'auto') {
-      // Step 1: Pre-classify intent for instant UI telemetry feedback
-      const cls = await classifyPrompt(currentPrompt);
+      // Instant zero-delay heuristic for initial telemetry rendering
+      const isCode = /(code|function|debug|script|python|javascript|class|sql|regex|algorithm|bst)/i.test(currentPrompt);
+      const isDoc = /(report|document|summary|analysis|paper|essay|draft|overview|executive)/i.test(currentPrompt);
+      const isImg = /(image|picture|drawing|photo|portrait|painting)/i.test(currentPrompt);
+      const isVid = /(video|animation|cinematic|clip)/i.test(currentPrompt);
+      const initialTask = isCode ? 'CODE' : isDoc ? 'DOCUMENT_GENERATION' : isImg ? 'IMAGE_GENERATION' : isVid ? 'VIDEO_GENERATION' : 'TEXT';
 
       const assistantMsgId = Math.random().toString(36).substring(2, 9);
       const initialAssistantMsg = {
@@ -254,21 +258,21 @@ export default function WorkspaceDashboard() {
         telemetry: {
           userPrompt: currentPrompt,
           presetMode: currentPresetMode,
-          taskType: cls.taskType || 'TEXT',
-          targetModel: cls.recommendedModel || 'gemini-1.5-flash',
-          targetProvider: cls.recommendedProvider || 'gemini',
-          confidence: cls.confidence || 0.95,
-          classificationMethod: cls.classificationMethod || 'keyword',
-          estimatedLatency: cls.estimatedLatency || 800,
-          costTier: cls.costTier || 'low',
-          capability: cls.capability || ''
+          taskType: initialTask,
+          targetModel: 'qwen/qwen3.8-27b',
+          targetProvider: 'groq',
+          confidence: 0.95,
+          classificationMethod: 'instant-heuristic',
+          estimatedLatency: 350,
+          costTier: 'low',
+          capability: 'High-speed Groq LPU'
         },
         timestamp: new Date().toLocaleTimeString()
       };
 
       setMessages((prev) => [...prev, initialAssistantMsg]);
 
-      // Dispatch via REST Intent Router pipeline
+      // Direct zero-overhead router dispatch
       const start = Date.now();
       const res = await routePrompt({ prompt: currentPrompt, temperature });
       const latencyMs = Date.now() - start;

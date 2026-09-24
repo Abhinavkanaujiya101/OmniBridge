@@ -5,10 +5,18 @@ import { Sliders, Sparkles, Layers, Thermometer, Radio } from 'lucide-react';
 
 const PROVIDER_OPTIONS = [
   {
+    id: 'groq',
+    name: 'Groq',
+    fullName: 'Groq Cloud',
+    models: ['qwen/qwen3.8-27b', 'openai/gpt-oss-20b', 'openai/gpt-oss-120b'],
+    badge: 'Ultra-Fast',
+    activeClass: 'bg-orange-600/30 border-orange-500/50 text-orange-200'
+  },
+  {
     id: 'gemini',
     name: 'Gemini',
     fullName: 'Google Gemini',
-    models: ['gemini-1.5-flash', 'gemini-1.5-pro'],
+    models: ['gemini-3.6-flash', 'gemini-flash-latest', 'gemini-2.5-pro'],
     badge: 'Fast',
     activeClass: 'bg-sky-600/30 border-sky-500/50 text-sky-200'
   },

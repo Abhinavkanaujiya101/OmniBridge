@@ -98,11 +98,12 @@ async function callGemini(model, prompt, temperature = 0.7) {
   const apiKey = config.providers.gemini.apiKey;
   if (!apiKey) throw Object.assign(new Error('Gemini API key not configured'), { _missingKey: true });
 
-  const url = `${config.providers.gemini.baseUrl}/models/${model}:generateContent?key=${apiKey}`;
+  const targetModel = (!model || model.includes('1.5') || model.includes('1.0')) ? 'gemini-3.6-flash' : model;
+  const url = `${config.providers.gemini.baseUrl}/models/${targetModel}:generateContent?key=${apiKey}`;
   const response = await axios.post(
     url,
     { contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature } },
-    { timeout: 30000 }
+    { timeout: 8000 }
   );
 
   return {
@@ -119,7 +120,7 @@ async function callOpenAI(model, prompt, temperature = 0.7) {
   const response = await axios.post(
     url,
     { model, messages: [{ role: 'user', content: prompt }], temperature },
-    { headers: { Authorization: `Bearer ${apiKey}` }, timeout: 30000 }
+    { headers: { Authorization: `Bearer ${apiKey}` }, timeout: 8000 }
   );
 
   return {
@@ -320,7 +321,7 @@ async function routeIntent(payload) {
       success: false,
       isRateLimited: true,
       taskType,
-      targetModel: primary?.model || 'gemini-1.5-flash',
+      targetModel: primary?.model || 'gemini-3.6-flash',
       targetProvider: primary?.provider || 'gemini',
       actualLatencyMs: Date.now() - startTime,
       confidence,
@@ -337,7 +338,7 @@ async function routeIntent(payload) {
 
   const sandboxResult = generateSandboxResponse({
     provider: primary?.provider || 'gemini',
-    model: primary?.model || 'gemini-1.5-flash',
+    model: primary?.model || 'gemini-3.6-flash',
     taskType,
     prompt: optimizedPrompt
   });
@@ -348,7 +349,7 @@ async function routeIntent(payload) {
     success: true,
     sandboxMode: true,
     taskType,
-    targetModel: primary?.model || 'gemini-1.5-flash',
+    targetModel: primary?.model || 'gemini-3.6-flash',
     targetProvider: primary?.provider || 'gemini',
     optimizedPrompt,
     estimatedLatency: primary?.estimatedLatencyMs || 800,
@@ -370,7 +371,8 @@ async function routeIntent(payload) {
  * Generates realistic sandbox responses when external API keys are unconfigured or throttled.
  */
 function generateSandboxResponse({ provider, model, taskType, prompt }) {
-  const norm = (prompt || '').trim();
+  // Strip system directive so raw user prompt is evaluated cleanly
+  const norm = (prompt || '').replace(/\[System Directive:[\s\S]*?\]/gi, '').trim();
 
   if (taskType === 'CODE') {
     const codeOutput = generateDynamicCode(norm);
@@ -454,7 +456,7 @@ This document provides a comprehensive analysis and structured overview regardin
     };
   }
 
-  if (/^\s*(hi|hii|hello|hey|greetings|howdy|good\s+morning|good\s+evening)\s*\!*$/i.test(norm)) {
+  if (/^\s*(hi|hii|hello|hey|greetings|howdy|good\s+morning|good\s+evening)\b/i.test(norm)) {
     return {
       output: `Hello! 👋 How can I assist you today?`,
       usage: { promptTokens: 5, completionTokens: 10, totalTokens: 15 }

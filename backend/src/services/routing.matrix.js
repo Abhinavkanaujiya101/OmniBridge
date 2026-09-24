@@ -39,7 +39,7 @@ const ROUTING_MATRIX = {
   TEXT: [
     {
       provider: 'groq',
-      model: 'llama-3.1-8b-instant',
+      model: 'qwen/qwen3.8-27b',
       estimatedLatencyMs: 300,
       costTier: 'low',
       capability: 'Ultra-fast response for casual conversation, greetings, banter, and text summarization',
@@ -47,7 +47,7 @@ const ROUTING_MATRIX = {
     },
     {
       provider: 'gemini',
-      model: 'gemini-1.5-flash',
+      model: 'gemini-3.6-flash',
       estimatedLatencyMs: 800,
       costTier: 'low',
       capability: 'Ultra-fast text generation, strong reasoning, 1M context window',
@@ -82,8 +82,16 @@ const ROUTING_MATRIX = {
   // ── DOCUMENT_GENERATION: Multi-format document synthesis, reports, H1/H2 formatting ─────────
   DOCUMENT_GENERATION: [
     {
+      provider: 'groq',
+      model: 'qwen/qwen3.8-27b',
+      estimatedLatencyMs: 400,
+      costTier: 'low',
+      capability: 'Ultra-fast text document generation and report drafting',
+      supportsStream: true
+    },
+    {
       provider: 'gemini',
-      model: 'gemini-1.5-flash',
+      model: 'gemini-3.6-flash',
       estimatedLatencyMs: 900,
       costTier: 'low',
       capability: 'Optimal structured document synthesis, long context reports, H1/H2 formatting',
@@ -95,14 +103,6 @@ const ROUTING_MATRIX = {
       estimatedLatencyMs: 1300,
       costTier: 'low',
       capability: 'Reliable document structure, executive summaries, bullet points',
-      supportsStream: true
-    },
-    {
-      provider: 'groq',
-      model: 'llama-3.1-8b-instant',
-      estimatedLatencyMs: 400,
-      costTier: 'low',
-      capability: 'Ultra-fast text document generation and report drafting',
       supportsStream: true
     },
     {
@@ -119,7 +119,7 @@ const ROUTING_MATRIX = {
   CODE: [
     {
       provider: 'groq',
-      model: 'llama-3.1-8b-instant',
+      model: 'qwen/qwen3.8-27b',
       estimatedLatencyMs: 350,
       costTier: 'low',
       capability: 'Lightweight code generation and standard utility functions',
@@ -127,7 +127,7 @@ const ROUTING_MATRIX = {
     },
     {
       provider: 'gemini',
-      model: 'gemini-1.5-flash',
+      model: 'gemini-3.6-flash',
       estimatedLatencyMs: 900,
       costTier: 'low',
       capability: 'Fast code generation with multi-language support',

@@ -235,6 +235,12 @@ function classifyIntent(prompt) {
 function optimizePrompt(prompt, taskType) {
   const trimmed = (prompt || '').trim();
 
+  // Keep simple conversational greetings clean and fast
+  const isGreeting = /^(hi|hii|hello|hey|greetings|howdy|sup|good\s+morning|good\s+afternoon|good\s+evening)[!.]*$/i.test(trimmed);
+  if (isGreeting && (taskType === 'TEXT' || !taskType)) {
+    return trimmed;
+  }
+
   const textProportionalDirective = `[System Directive: Match response length directly to user prompt scope. For brief greetings (e.g., 'hey', 'hello', 'hi'), respond with a simple, concise 1-sentence greeting. Do NOT list conversation categories, menus, or bullet points unless explicitly asked.]`;
 
   const templates = {
