@@ -91,25 +91,59 @@ OmniBridge is structured as an isolated multi-package repository. Each subprojec
 
 ## 🚀 Quick Start
 
-### 1. Environment Setup
-Copy the centralized `.env.example` template into `.env` and add your API keys:
+### 📋 Prerequisites & System Requirements
+Before running OmniBridge, ensure your development environment meets the following requirements:
+- **Node.js**: `v18.18.0` or higher (`v20.x` or `v22.x` recommended) — [Download Node.js](https://nodejs.org/)
+- **npm**: `v9.0.0` or higher (bundled with Node.js)
+- **Git**: Installed and available in your terminal
+- **Operating System**: Windows, macOS, or Linux
+- **AI Provider API Key**: At least one active API key (e.g. **Groq Cloud** for free high-speed LPU inference, **Google Gemini**, or **OpenAI**)
+
+---
+
+### 1. Clone & Environment Setup
+Clone the repository, copy the centralized environment template into `.env`, and populate your API credentials:
 ```bash
+git clone https://github.com/Abhinavkanaujiya101/OmniBridge.git
+cd OmniBridge
+
+# Copy centralized environment template
 cp .env.example .env
 ```
 *(The backend automatically loads this root `.env` file directly).*
 
-### 2. Install Dependencies
+---
+
+### 2. Install Project Dependencies
+
+OmniBridge uses an isolated subproject architecture. Run the root installer script to install all dependencies across the entire project at once:
+
 ```bash
-# Install root, backend, and frontend packages
+# Installs root orchestrator, backend server, and frontend web dependencies
 npm run install:all
 ```
 
+#### What gets installed:
+- **Root (`./node_modules`)**: Installs `concurrently` to orchestrate multiple server processes in a single terminal.
+- **Backend (`./backend/node_modules`)**: Installs `express`, `ws`, `socket.io`, `axios`, `dotenv`, `cors`, `pdfkit`, `@supabase/supabase-js`, `pg`, `lumaai`, and `nodemon`.
+- **Frontend (`./frontend/node_modules`)**: Installs `next`, `react`, `react-dom`, `tailwindcss`, `lucide-react`, `jspdf`, `docx`, `socket.io-client`, and `tailwind-merge`.
+
+> **💡 Alternative (Manual Individual Installation):**
+> ```bash
+> npm install                      # 1. Install root orchestrator
+> npm install --prefix backend     # 2. Install backend Express & WebSocket server
+> npm install --prefix frontend    # 3. Install frontend Next.js 14 console
+> ```
+
+---
+
 ### 3. Run Development Stack
+Launch both the backend API/WebSocket server and the Next.js frontend concurrently:
 ```bash
-# Run both Backend (Port 5000) and Frontend (Port 3000) concurrently
 npm run dev
 ```
 
+#### Service URLs:
 - **Frontend Dashboard**: [http://localhost:3000](http://localhost:3000)
 - **Backend API**: [http://localhost:5000](http://localhost:5000)
 - **Health Check**: [http://localhost:5000/api/v1/gateway/health](http://localhost:5000/api/v1/gateway/health)
