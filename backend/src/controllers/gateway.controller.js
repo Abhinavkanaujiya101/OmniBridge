@@ -36,6 +36,7 @@ class GatewayController {
     try {
       const { provider = 'gemini', model, prompt, temperature } = req.body;
 
+      
       if (!prompt) {
         return res.status(400).json({
           success: false,
