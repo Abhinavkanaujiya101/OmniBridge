@@ -22,6 +22,7 @@ function parseStreamChunk(rawChunk, provider = 'openai') {
   for (const line of lines) {
     if (line.startsWith('data: ')) {
       const dataStr = line.replace('data: ', '').trim();
+
       
       if (dataStr === '[DONE]') {
         parsedPackets.push({
