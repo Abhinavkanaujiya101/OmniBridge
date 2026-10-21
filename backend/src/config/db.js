@@ -2,8 +2,9 @@ const { createClient } = require('@supabase/supabase-js');
 const { Pool } = require('pg');
 const config = require('./env');
 
+
 let supabase = null;
-let pgPool = null;
+let pgPool =  null;
 
 // Initialize Supabase Client if credentials exist
 if (config.db.supabaseUrl && config.db.supabaseAnonKey) {
@@ -16,6 +17,7 @@ if (config.db.supabaseUrl && config.db.supabaseAnonKey) {
 // Initialize Postgres Client Pool if connection string exists
 if (config.db.connectionString) {
   pgPool = new Pool({
+    
     connectionString: config.db.connectionString,
     ssl: config.env === 'production' ? { rejectUnauthorized: false } : false
   });
